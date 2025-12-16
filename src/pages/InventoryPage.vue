@@ -149,7 +149,7 @@
             <label class="form-label small fw-bold">Código Barra</label>
              <div class="position-relative">
               <input v-model="form.code" required class="form-control pe-5" />
-              <button type="button" class="btn btn-sm btn-link position-absolute top-0 end-0 text-secondary">
+              <button type="button" @click="isScannerOpen = true" class="btn btn-sm btn-link position-absolute top-0 end-0 text-secondary">
                 <ScanLine style="width: 18px;" />
               </button>
              </div>
@@ -210,6 +210,17 @@
       </div>
     </Modal>
 
+    <!-- Scanner Modal -->
+    <Modal
+      :isOpen="isScannerOpen"
+      title="Escanear Código"
+      @close="isScannerOpen = false"
+    >
+      <div class="overflow-hidden bg-black rounded" style="height: 300px;">
+        <BarcodeScanner @scan="handleScan" />
+      </div>
+    </Modal>
+
     <Toast />
   </div>
 </template>
@@ -220,6 +231,7 @@ import { useProductStore } from '../stores/productStore'
 import { useToastStore } from '../stores/toastStore'
 import Modal from '../components/ui/Modal.vue'
 import Toast from '../components/ui/Toast.vue'
+import BarcodeScanner from '../components/BarcodeScanner.vue'
 import { Search, Plus, Edit2, Trash2, Package, ScanLine, Minus } from 'lucide-vue-next'
 
 const productStore = useProductStore()
@@ -230,6 +242,7 @@ const filterCategory = ref('Todos')
 
 const isProductModalOpen = ref(false)
 const isStockModalOpen = ref(false)
+const isScannerOpen = ref(false)
 const editingProduct = ref(null)
 const stockProduct = ref(null)
 
@@ -289,5 +302,12 @@ function saveStock() {
     toastStore.addToast(msg, type)
   }
   isStockModalOpen.value = false
+}
+
+function handleScan(code) {
+  form.code = code
+  isScannerOpen.value = false
+  if (navigator.vibrate) navigator.vibrate(50)
+  toastStore.addToast(`Código capturado: ${code}`, 'success')
 }
 </script>
