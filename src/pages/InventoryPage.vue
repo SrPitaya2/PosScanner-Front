@@ -304,7 +304,12 @@ function saveStock() {
   isStockModalOpen.value = false
 }
 
+const lastScan = ref(0)
 function handleScan(code) {
+  const now = Date.now()
+  if (now - lastScan.value < 1500) return
+  lastScan.value = now
+
   form.code = code
   isScannerOpen.value = false
   if (navigator.vibrate) navigator.vibrate(50)

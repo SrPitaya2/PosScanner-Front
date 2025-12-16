@@ -243,7 +243,12 @@ function addToCart(product) {
   toastStore.addToast(`+ ${product.name}`, 'success', 1000)
 }
 
+const lastScan = ref(0)
 function handleScan(code) {
+  const now = Date.now()
+  if (now - lastScan.value < 1500) return // 1.5s cooldown
+  lastScan.value = now
+
   const product = productStore.findByCode(code)
   if (product) {
     addToCart(product)
