@@ -1,101 +1,106 @@
 <template>
-  <div class="p-4 md:p-6 max-w-7xl mx-auto h-full flex flex-col pb-20 md:pb-6">
+  <div class="container-fluid py-4 h-100 d-flex flex-column pb-5 mb-5 md-mb-0">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Historial</h1>
-        <p class="text-gray-500 text-sm">Registro de transacciones</p>
+        <h1 class="h3 fw-bold m-0 text-dark">Historial</h1>
+        <p class="text-secondary small m-0">Registro de transacciones</p>
       </div>
       
-      <div class="w-full md:w-auto bg-green-50 p-3 rounded-xl border border-green-100 flex items-center justify-between gap-4">
-        <span class="text-sm font-medium text-green-700">Ventas de Hoy</span>
-        <span class="text-xl font-bold text-green-700">${{ salesStore.todayTotal.toFixed(2) }}</span>
+      <div class="alert alert-success d-flex align-items-center justify-content-between gap-4 m-0 py-2">
+        <span class="small fw-medium text-success-emphasis">Ventas de Hoy</span>
+        <span class="h5 fw-bold text-success m-0">${{ salesStore.todayTotal.toFixed(2) }}</span>
       </div>
     </div>
 
     <!-- Filters -->
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 items-end">
-      <div class="flex gap-2 w-full md:w-auto">
-        <div class="flex-1">
-          <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Desde</label>
-          <input type="date" v-model="filters.start" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-        </div>
-        <div class="flex-1">
-          <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Hasta</label>
-          <input type="date" v-model="filters.end" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-        </div>
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-3 d-flex flex-column flex-md-row gap-3 align-items-end">
+         <div class="d-flex gap-2 w-100 w-md-auto">
+          <div class="flex-fill">
+            <label class="form-label text-uppercase small fw-bold text-secondary mb-1" style="font-size: 0.7rem;">Desde</label>
+            <input type="date" v-model="filters.start" class="form-control form-control-sm" />
+          </div>
+          <div class="flex-fill">
+            <label class="form-label text-uppercase small fw-bold text-secondary mb-1" style="font-size: 0.7rem;">Hasta</label>
+            <input type="date" v-model="filters.end" class="form-control form-control-sm" />
+          </div>
+         </div>
+         
+         <div class="w-100 flex-md-grow-0 d-md-flex justify-content-end">
+            <button @click="exportData" class="btn btn-dark btn-sm d-flex align-items-center justify-content-center gap-2 w-100 w-md-auto">
+              <Download style="width: 16px;" />
+              <span>Exportar</span>
+            </button>
+         </div>
       </div>
-      
-      <div class="flex-1"></div>
-
-      <button @click="exportData" class="w-full md:w-auto btn-primary flex items-center justify-center gap-2 text-sm px-4 py-2 bg-gray-800 hover:bg-gray-900">
-        <Download class="w-4 h-4" />
-        <span>Exportar</span>
-      </button>
     </div>
 
     <!-- Mobile Card View -->
-    <div class="md:hidden space-y-3">
+    <div class="d-md-none d-flex flex-column gap-3">
       <div 
         v-for="sale in filteredSales" 
         :key="sale.id" 
-        class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2"
+        class="card border-0 shadow-sm cursor-pointer"
         @click="viewSale(sale)"
       >
-        <div class="flex justify-between items-start">
-           <div>
-             <p class="text-sm text-gray-500">{{ formatDate(sale.date) }}</p>
-             <p class="text-xs font-bold text-blue-600 uppercase mt-1">{{ sale.method }}</p>
-           </div>
-           <p class="text-lg font-bold text-gray-900">${{ sale.total.toFixed(2) }}</p>
-        </div>
-        <div class="border-t border-gray-50 pt-2 flex justify-between items-center text-sm text-gray-500">
-           <span>{{ sale.items.length }} Productos</span>
-           <button class="text-primary flex items-center gap-1">Ver Detalle <ArrowRight class="w-3 h-3" /></button>
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+             <div>
+               <p class="small text-secondary mb-1">{{ formatDate(sale.date) }}</p>
+               <span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ sale.method }}</span>
+             </div>
+             <p class="h6 fw-bold text-dark m-0">${{ sale.total.toFixed(2) }}</p>
+          </div>
+          <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2 text-secondary small">
+             <span>{{ sale.items.length }} Productos</span>
+             <button class="btn btn-link p-0 text-decoration-none d-flex align-items-center gap-1 small">
+                Ver Detalle <ArrowRight style="width: 12px;" />
+             </button>
+          </div>
         </div>
       </div>
       
-      <div v-if="filteredSales.length === 0" class="text-center py-8 text-gray-400">
+      <div v-if="filteredSales.length === 0" class="text-center py-5 text-secondary">
         No hay ventas
       </div>
     </div>
 
-    <!-- Desktop Table (Hidden Mobile) -->
-    <div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
-       <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold tracking-wider">
-              <th class="px-6 py-4">Fecha y Hora</th>
-              <th class="px-6 py-4">Método Pago</th>
-              <th class="px-6 py-4 text-center">Productos</th>
-              <th class="px-6 py-4 text-right">Total</th>
-              <th class="px-6 py-4 text-center">Detalles</th>
+    <!-- Desktop Table -->
+    <div class="d-none d-md-block card shadow-sm border-0 flex-grow-1 overflow-hidden">
+       <div class="card-body p-0 overflow-auto">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="bg-light sticky-top">
+            <tr class="small text-uppercase text-secondary">
+              <th class="ps-4 py-3 border-0">Fecha y Hora</th>
+              <th class="py-3 border-0">Método Pago</th>
+              <th class="text-center py-3 border-0">Productos</th>
+              <th class="text-end py-3 border-0">Total</th>
+              <th class="text-center py-3 border-0">Detalles</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
+          <tbody>
             <tr 
               v-for="sale in filteredSales" 
               :key="sale.id" 
-              class="hover:bg-gray-50 transition-colors"
             >
-              <td class="px-6 py-3 text-gray-900 font-medium">
+              <td class="ps-4 fw-medium text-dark">
                 {{ formatDate(sale.date) }}
               </td>
-              <td class="px-6 py-3">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <td>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
                   {{ sale.method }}
                 </span>
               </td>
-              <td class="px-6 py-3 text-center text-gray-500">
+              <td class="text-center text-secondary">
                 {{ sale.items.reduce((acc, item) => acc + item.quantity, 0) }}
               </td>
-              <td class="px-6 py-3 text-right font-bold text-gray-900">
+              <td class="text-end fw-bold text-dark">
                 ${{ sale.total.toFixed(2) }}
               </td>
-              <td class="px-6 py-3 text-center">
-                <button @click="viewSale(sale)" class="text-gray-400 hover:text-primary transition-colors p-1">
-                  <Eye class="w-5 h-5" />
+              <td class="text-center">
+                <button @click="viewSale(sale)" class="btn btn-light btn-sm text-secondary">
+                  <Eye style="width: 18px;" />
                 </button>
               </td>
             </tr>
@@ -111,36 +116,36 @@
       @close="selectedSale = null"
     >
       <div v-if="selectedSale">
-        <div class="mb-4 flex justify-between text-sm text-gray-500">
+        <div class="d-flex justify-content-between text-secondary small mb-3">
           <span>{{ formatDate(selectedSale.date) }}</span>
-          <span class="font-bold text-gray-900">{{ selectedSale.method }}</span>
+          <span class="fw-bold text-dark">{{ selectedSale.method }}</span>
         </div>
 
-        <div class="border rounded-lg overflow-hidden mb-4">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-50">
+        <div class="table-responsive border rounded mb-3">
+          <table class="table table-sm mb-0">
+            <thead class="bg-light">
               <tr>
-                <th class="px-4 py-2 text-left">Producto</th>
-                <th class="px-4 py-2 text-center">Cant.</th>
-                <th class="px-4 py-2 text-right">Precio</th>
-                <th class="px-4 py-2 text-right">Subtotal</th>
+                <th class="ps-3">Producto</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-end">Precio</th>
+                <th class="text-end pe-3">Subtotal</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in selectedSale.items" :key="item.id" class="border-t border-gray-100">
-                <td class="px-4 py-2">{{ item.name }}</td>
-                <td class="px-4 py-2 text-center">{{ item.quantity }}</td>
-                <td class="px-4 py-2 text-right">${{ item.price.toFixed(2) }}</td>
-                <td class="px-4 py-2 text-right font-semibold">${{ (item.price * item.quantity).toFixed(2) }}</td>
+              <tr v-for="item in selectedSale.items" :key="item.id">
+                <td class="ps-3">{{ item.name }}</td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-end">${{ item.price.toFixed(2) }}</td>
+                <td class="text-end pe-3 fw-medium">${{ (item.price * item.quantity).toFixed(2) }}</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div class="flex justify-end border-t pt-4">
-          <div class="text-right">
-            <p class="text-sm text-gray-500">Total Pagado</p>
-            <p class="text-2xl font-bold text-gray-900">${{ selectedSale.total.toFixed(2) }}</p>
+        <div class="d-flex justify-content-end border-top pt-3">
+          <div class="text-end">
+            <p class="small text-secondary m-0">Total Pagado</p>
+            <p class="h4 fw-bold text-dark m-0">${{ selectedSale.total.toFixed(2) }}</p>
           </div>
         </div>
       </div>

@@ -1,40 +1,34 @@
 <template>
-  <div class="relative w-full h-full bg-black rounded-lg overflow-hidden">
+  <div class="w-100 h-100 position-relative bg-black overflow-hidden">
     <!-- Scanner Container -->
-    <div id="reader" class="w-full h-full"></div>
+    <div id="reader" class="w-100 h-100"></div>
     
-    <!-- Overlay UI -->
-    <div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
-      <div class="w-64 h-48 border-2 border-primary/50 rounded-lg relative">
-        <div class="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-primary"></div>
-        <div class="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-primary"></div>
-        <div class="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-primary"></div>
-        <div class="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-primary"></div>
-      </div>
-      <p class="mt-4 text-white text-sm font-medium bg-black/50 px-3 py-1 rounded-full">
-        Escanea un código de barras
-      </p>
-    </div>
-
-    <!-- Error/Status -->
-    <div v-if="error" class="absolute bottom-4 left-4 right-4 bg-red-500 text-white p-2 rounded text-center text-sm">
-      {{ error }}
-    </div>
+    <!-- Overlay Guide (Centered Box) -->
+    <div class="position-absolute top-50 start-50 translate-middle pe-none border border-danger border-2 rounded" style="width: 70%; height: 50%; opacity: 0.5;"></div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { Html5Qrcode } from 'html5-qrcode'
 
 const emit = defineEmits(['scan'])
-const error = ref(null)
 let html5QrCode = null
 
-onMounted(async () => {
+onMounted(() => {
+  startScanner()
+})
+
+onUnmounted(() => {
+  stopScanner()
+})
+
+async function startScanner() {
   try {
     const devices = await Html5Qrcode.getCameras()
     if (devices && devices.length) {
+      if (!document.getElementById("reader")) return
+      
       html5QrCode = new Html5Qrcode("reader")
       
       await html5QrCode.start(
@@ -42,36 +36,41 @@ onMounted(async () => {
         {
           fps: 10,
           qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0, 
+          aspectRatio: 1.777778, // 16:9 aspect ratio
+          disableFlip: false
         },
         (decodedText, decodedResult) => {
-          // Success
           emit('scan', decodedText)
         },
         (errorMessage) => {
-          // Parse error, ignore common failures during scanning
+          // ignore scan errors
         }
       )
-    } else {
-      error.value = "No se encontraron cámaras."
     }
   } catch (err) {
-    console.error(err)
-    error.value = "Error al iniciar la cámara (Permisos?)"
+    console.error("Error starting scanner", err)
   }
-})
+}
 
-onUnmounted(() => {
+async function stopScanner() {
   if (html5QrCode) {
-    html5QrCode.stop().catch(err => console.error(err))
+    try {
+      await html5QrCode.stop()
+      html5QrCode.clear()
+      html5QrCode = null
+    } catch (e) {
+      console.error("Failed to stop scanner", e)
+    }
   }
-})
+}
 </script>
 
 <style>
+/* Force video to cover the container */
 #reader video {
-  object-fit: cover;
+  object-fit: cover !important;
   width: 100% !important;
   height: 100% !important;
 }
+.pe-none { pointer-events: none; }
 </style>

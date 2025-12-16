@@ -1,82 +1,81 @@
 <template>
-  <div class="p-4 md:p-6 max-w-7xl mx-auto h-full flex flex-col pb-20 md:pb-6">
-    <!-- Header Controls -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+  <div class="container-fluid py-4 h-100 d-flex flex-column pb-5 mb-5 md-mb-0">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Inventario</h1>
-        <p class="text-gray-500 text-sm">Gestiona tus productos</p>
+        <h1 class="h3 fw-bold m-0 text-dark">Inventario</h1>
+        <p class="text-secondary small m-0">Gestiona tus productos</p>
       </div>
       
-      <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-        <div class="relative flex-1 md:w-64">
-           <Search class="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
+      <div class="d-flex flex-column flex-sm-row gap-2 w-100 w-md-auto">
+        <div class="position-relative flex-grow-1" style="min-width: 250px;">
+           <Search class="position-absolute text-secondary" style="left: 10px; top: 10px; width: 18px;" />
            <input 
             v-model="searchQuery"
             placeholder="Buscar..."
-            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+            class="form-control ps-5"
           />
         </div>
         
-        <div class="flex gap-2">
+        <div class="d-flex gap-2">
           <select 
             v-model="filterCategory"
-            class="flex-1 border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary truncate"
+            class="form-select w-auto"
           >
             <option v-for="cat in productStore.categories" :key="cat" :value="cat">{{ cat }}</option>
           </select>
 
-          <button @click="openModal()" class="btn-primary flex items-center justify-center gap-2 whitespace-nowrap px-3">
-            <Plus class="w-5 h-5" />
-            <span class="hidden sm:inline">Nuevo</span>
+          <button @click="openModal()" class="btn btn-primary d-flex align-items-center gap-2 text-nowrap">
+            <Plus style="width: 20px; height: 20px;" />
+            <span class="d-none d-sm-inline">Nuevo</span>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Desktop Table (Hidden on Mobile) -->
-    <div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold tracking-wider">
-              <th class="px-6 py-4">Producto</th>
-              <th class="px-6 py-4">Código</th>
-              <th class="px-6 py-4">Categoría</th>
-              <th class="px-6 py-4 text-right">Precio</th>
-              <th class="px-6 py-4 text-center">Stock</th>
-              <th class="px-6 py-4 text-right">Acciones</th>
+    <!-- Desktop Table -->
+    <div class="d-none d-md-block card shadow-sm border-0 flex-grow-1 overflow-hidden">
+      <div class="card-body p-0 overflow-auto">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="bg-light sticky-top">
+            <tr class="text-uppercase small text-secondary">
+              <th class="ps-4 py-3 border-bottom-0">Producto</th>
+              <th class="py-3 border-bottom-0">Código</th>
+              <th class="py-3 border-bottom-0">Categoría</th>
+              <th class="text-end py-3 border-bottom-0">Precio</th>
+              <th class="text-center py-3 border-bottom-0">Stock</th>
+              <th class="text-end pe-4 py-3 border-bottom-0">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
+          <tbody>
             <tr 
               v-for="product in filteredProducts" 
               :key="product.id" 
-              class="hover:bg-blue-50/30 transition-colors group"
             >
-              <td class="px-6 py-3 font-medium text-gray-900">{{ product.name }}</td>
-              <td class="px-6 py-3 text-gray-500 fontFamily-mono text-sm">{{ product.code }}</td>
-              <td class="px-6 py-3">
-                <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-medium">{{ product.category }}</span>
+              <td class="ps-4 fw-medium text-dark">{{ product.name }}</td>
+              <td class="text-secondary small font-monospace">{{ product.code }}</td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ product.category }}</span>
               </td>
-              <td class="px-6 py-3 text-right font-bold text-gray-700">${{ product.price.toFixed(2) }}</td>
-              <td class="px-6 py-3 text-center">
+              <td class="text-end fw-bold text-dark">${{ product.price.toFixed(2) }}</td>
+              <td class="text-center">
                 <span 
-                  class="px-2 py-1 rounded-full text-xs font-bold"
-                  :class="product.stock < 10 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'"
+                  class="badge rounded-pill"
+                  :class="product.stock < 10 ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'"
                 >
                   {{ product.stock }}
                 </span>
               </td>
-              <td class="px-6 py-3 text-right">
-                <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="openStockModal(product)" class="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Ajustar Stock">
-                     <Package class="w-4 h-4" />
+              <td class="text-end pe-4">
+                <div class="btn-group btn-group-sm">
+                  <button @click="openStockModal(product)" class="btn btn-light text-primary" title="Ajustar Stock">
+                     <Package style="width: 16px;" />
                   </button>
-                  <button @click="openModal(product)" class="p-1 text-gray-500 hover:bg-gray-100 rounded" title="Editar">
-                    <Edit2 class="w-4 h-4" />
+                  <button @click="openModal(product)" class="btn btn-light text-secondary" title="Editar">
+                    <Edit2 style="width: 16px;" />
                   </button>
-                  <button @click="confirmDelete(product)" class="p-1 text-red-500 hover:bg-red-50 rounded" title="Eliminar">
-                    <Trash2 class="w-4 h-4" />
+                  <button @click="confirmDelete(product)" class="btn btn-light text-danger" title="Eliminar">
+                    <Trash2 style="width: 16px;" />
                   </button>
                 </div>
               </td>
@@ -86,96 +85,98 @@
       </div>
     </div>
 
-    <!-- Mobile Card List (Visible on Mobile) -->
-    <div class="md:hidden space-y-3">
+    <!-- Mobile Card List -->
+    <div class="d-md-none d-flex flex-column gap-3 pb-5">
        <div 
         v-for="product in filteredProducts" 
         :key="product.id"
-        class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col gap-2"
+        class="card border-0 shadow-sm"
        >
-         <div class="flex justify-between items-start">
-           <div>
-             <h3 class="font-bold text-gray-900">{{ product.name }}</h3>
-             <p class="text-xs text-gray-500 font-mono">{{ product.code }}</p>
+         <div class="card-body p-3">
+           <div class="d-flex justify-content-between align-items-start mb-2">
+             <div>
+               <h6 class="fw-bold text-dark mb-1">{{ product.name }}</h6>
+               <code class="text-secondary small">{{ product.code }}</code>
+             </div>
+             <span class="fw-bold text-primary h6 m-0">${{ product.price.toFixed(2) }}</span>
            </div>
-           <span class="font-bold text-primary">${{ product.price.toFixed(2) }}</span>
-         </div>
-         
-         <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-50">
-            <div class="flex items-center gap-2">
-               <span 
-                  class="px-2 py-1 rounded-full text-xs font-bold"
-                  :class="product.stock < 10 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'"
-                >
-                  {{ product.stock }} un.
-                </span>
-                <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">{{ product.category }}</span>
-            </div>
-            
-            <div class="flex gap-2">
-               <button @click="openStockModal(product)" class="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                 <Package class="w-4 h-4" />
-               </button>
-               <button @click="openModal(product)" class="p-2 bg-gray-50 text-gray-600 rounded-lg">
-                 <Edit2 class="w-4 h-4" />
-               </button>
-               <button @click="confirmDelete(product)" class="p-2 bg-red-50 text-red-600 rounded-lg">
-                 <Trash2 class="w-4 h-4" />
-               </button>
-            </div>
+           
+           <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+              <div class="d-flex gap-2">
+                 <span 
+                    class="badge rounded-pill"
+                    :class="product.stock < 10 ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'"
+                  >
+                    {{ product.stock }} un.
+                  </span>
+                  <span class="badge bg-light text-dark border">{{ product.category }}</span>
+              </div>
+              
+              <div class="btn-group btn-group-sm">
+                 <button @click="openStockModal(product)" class="btn btn-outline-primary border-0 bg-primary-subtle text-primary rounded-2 me-1 p-2">
+                   <Package style="width: 16px; height: 16px;" />
+                 </button>
+                 <button @click="openModal(product)" class="btn btn-outline-secondary border-0 bg-light text-secondary rounded-2 me-1 p-2">
+                   <Edit2 style="width: 16px; height: 16px;" />
+                 </button>
+                 <button @click="confirmDelete(product)" class="btn btn-outline-danger border-0 bg-danger-subtle text-danger rounded-2 p-2">
+                   <Trash2 style="width: 16px; height: 16px;" />
+                 </button>
+              </div>
+           </div>
          </div>
        </div>
-
-       <div v-if="filteredProducts.length === 0" class="text-center py-8 text-gray-400">
+       
+       <div v-if="filteredProducts.length === 0" class="text-center py-5 text-secondary">
           No se encontraron productos
        </div>
     </div>
 
-    <!-- Product Modal (Add/Edit) -->
+    <!-- Modals (Reusing components, assuming they are clean) -->
     <Modal 
       :isOpen="isProductModalOpen" 
       :title="editingProduct ? 'Editar Producto' : 'Nuevo Producto'"
       @close="isProductModalOpen = false"
     >
-      <form @submit.prevent="saveProduct" class="space-y-4">
+      <form @submit.prevent="saveProduct" class="d-flex flex-column gap-3">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-          <input v-model="form.name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary outline-none" />
+          <label class="form-label small fw-bold">Nombre</label>
+          <input v-model="form.name" required class="form-control" />
         </div>
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Código Barra</label>
-             <div class="relative">
-              <input v-model="form.code" required class="w-full border border-gray-300 rounded-lg px-3 py-2 pr-8 focus:ring-2 focus:ring-primary outline-none" />
-              <button type="button" class="absolute right-2 top-2 text-gray-400 hover:text-primary">
-                <ScanLine class="w-5 h-5" />
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label small fw-bold">Código Barra</label>
+             <div class="position-relative">
+              <input v-model="form.code" required class="form-control pe-5" />
+              <button type="button" class="btn btn-sm btn-link position-absolute top-0 end-0 text-secondary">
+                <ScanLine style="width: 18px;" />
               </button>
              </div>
           </div>
-           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-            <input v-model="form.category" required list="categories" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary outline-none" />
+           <div class="col-6">
+            <label class="form-label small fw-bold">Categoría</label>
+            <input v-model="form.category" required list="categories" class="form-control" />
             <datalist id="categories">
               <option v-for="c in productStore.categories" :key="c" :value="c" />
             </datalist>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Precio</label>
-            <input v-model.number="form.price" type="number" step="0.50" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary outline-none" />
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label small fw-bold">Precio</label>
+            <input v-model.number="form.price" type="number" step="0.50" required class="form-control" />
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Stock Inicial</label>
-            <input v-model.number="form.stock" type="number" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary outline-none" />
+          <div class="col-6">
+            <label class="form-label small fw-bold">Stock Inicial</label>
+            <input v-model.number="form.stock" type="number" required class="form-control" />
           </div>
         </div>
 
-        <div class="pt-4 flex justify-end gap-3">
-          <button type="button" @click="isProductModalOpen = false" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium">Cancelar</button>
-          <button type="submit" class="btn-primary">Guardar</button>
+        <div class="d-flex justify-content-end gap-2 mt-2">
+          <button type="button" @click="isProductModalOpen = false" class="btn btn-light">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
         </div>
       </form>
     </Modal>
@@ -187,23 +188,23 @@
       @close="isStockModalOpen = false"
     >
       <div v-if="stockProduct" class="text-center">
-        <h4 class="text-xl font-bold mb-1">{{ stockProduct.name }}</h4>
-        <p class="text-gray-500 mb-6">Stock Actual: <span class="font-bold text-gray-900">{{ stockProduct.stock }}</span></p>
+        <h4 class="h5 fw-bold mb-1">{{ stockProduct.name }}</h4>
+        <p class="text-secondary mb-4">Stock Actual: <span class="fw-bold text-dark">{{ stockProduct.stock }}</span></p>
 
-        <div class="flex items-center justify-center gap-4 mb-8">
-           <button @click="stockForm.change = Math.max(-stockProduct.stock, stockForm.change - 1)" class="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 active:bg-gray-100">
-             <Minus class="w-5 h-5" />
+        <div class="d-flex align-items-center justify-content-center gap-3 mb-4">
+           <button @click="stockForm.change = Math.max(-stockProduct.stock, stockForm.change - 1)" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center p-0" style="width: 48px; height: 48px;">
+             <Minus style="width: 20px;" />
            </button>
-           <div class="w-24">
-             <input v-model.number="stockForm.change" class="w-full text-center text-3xl font-bold bg-transparent outline-none" />
-             <p class="text-xs text-gray-400 mt-1 uppercase tracking-wide">Añadir/Quitar</p>
+           <div style="width: 100px;">
+             <input v-model.number="stockForm.change" class="form-control border-0 text-center fs-3 fw-bold bg-transparent shadow-none" />
+             <p class="small text-secondary text-uppercase mb-0">Añadir/Quitar</p>
            </div>
-           <button @click="stockForm.change++" class="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 active:bg-gray-100">
-             <Plus class="w-5 h-5" />
+           <button @click="stockForm.change++" class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center p-0" style="width: 48px; height: 48px;">
+             <Plus style="width: 20px;" />
            </button>
         </div>
 
-        <button @click="saveStock" class="w-full btn-primary py-3">
+        <button @click="saveStock" class="btn btn-primary w-100 py-2">
           Confirmar Ajuste
         </button>
       </div>

@@ -1,52 +1,51 @@
 <template>
-  <div class="flex flex-col h-screen w-screen bg-gray-50 text-gray-900 font-sans overflow-hidden">
+  <div class="d-flex flex-column vh-100 vw-100 bg-light text-dark overflow-hidden">
     <!-- Desktop Header -->
-    <header class="hidden md:flex bg-white shadow-sm border-b border-gray-200 px-4 py-3 items-center justify-between z-10">
-      <div class="flex items-center gap-2">
-        <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+    <header class="d-none d-md-flex bg-white shadow-sm border-bottom px-3 py-2 align-items-center justify-content-between z-1" style="height: 60px;">
+      <div class="d-flex align-items-center gap-2">
+        <h1 class="h5 fw-bold m-0 text-primary">
           Mi Tienda
         </h1>
       </div>
       
-      <nav class="flex items-center gap-4">
-        <router-link to="/" class="nav-item-desktop" active-class="active">Vender</router-link>
-        <router-link to="/history" class="nav-item-desktop" active-class="active">Historial</router-link>
-        <router-link to="/inventory" class="nav-item-desktop" active-class="active">Inventario</router-link>
-        <router-link to="/check" class="nav-item-desktop" active-class="active">Verificar</router-link>
+      <nav class="d-flex align-items-center gap-2">
+        <router-link to="/" class="btn btn-sm fw-medium border-0" active-class="btn-primary-subtle text-primary" :class="$route.path !== '/' ? 'text-secondary bg-transparent' : ''">Vender</router-link>
+        <router-link to="/history" class="btn btn-sm fw-medium border-0" active-class="btn-primary-subtle text-primary" :class="$route.path !== '/history' ? 'text-secondary bg-transparent' : ''">Historial</router-link>
+        <router-link to="/inventory" class="btn btn-sm fw-medium border-0" active-class="btn-primary-subtle text-primary" :class="$route.path !== '/inventory' ? 'text-secondary bg-transparent' : ''">Inventario</router-link>
+        <router-link to="/check" class="btn btn-sm fw-medium border-0" active-class="btn-primary-subtle text-primary" :class="$route.path !== '/check' ? 'text-secondary bg-transparent' : ''">Verificar</router-link>
       </nav>
     </header>
 
-    <!-- Mobile Header (Minimal) -->
-    <header class="md:hidden bg-white shadow-sm px-4 py-2 flex items-center justify-between z-10 shrink-0 h-14">
-       <h1 class="text-lg font-bold text-primary">Mi Tienda</h1>
-       <!-- Space for extra actions if needed -->
+    <!-- Mobile Header -->
+    <header class="d-md-none bg-white shadow-sm px-3 py-2 d-flex align-items-center justify-content-between z-1 flex-shrink-0" style="height: 56px;">
+       <h1 class="h6 fw-bold m-0 text-primary">Mi Tienda</h1>
     </header>
 
     <!-- Content -->
-    <main class="flex-1 overflow-hidden relative w-full">
+    <main class="flex-grow-1 overflow-hidden position-relative w-100">
       <router-view></router-view>
     </main>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="md:hidden bg-white border-t border-gray-200 flex justify-around items-center shrink-0 z-20 pb-safe pt-2">
-      <router-link to="/" class="nav-item-mobile" active-class="text-primary">
-        <ShoppingBag class="w-6 h-6" />
-        <span class="text-[10px] font-medium mt-1">Venta</span>
+    <nav class="d-md-none bg-white border-top d-flex justify-content-around align-items-center flex-shrink-0 z-2 pb-5 pt-2">
+      <router-link to="/" class="d-flex flex-column align-items-center justify-content-center w-100 p-2 text-decoration-none" active-class="text-primary" :class="$route.path !== '/' ? 'text-secondary' : ''">
+        <ShoppingBag style="width: 24px; height: 24px;" />
+        <span class="small fw-medium mt-1" style="font-size: 10px;">Venta</span>
       </router-link>
       
-      <router-link to="/history" class="nav-item-mobile" active-class="text-primary">
-        <Clock class="w-6 h-6" />
-        <span class="text-[10px] font-medium mt-1">Historial</span>
+      <router-link to="/history" class="d-flex flex-column align-items-center justify-content-center w-100 p-2 text-decoration-none" active-class="text-primary" :class="$route.path !== '/history' ? 'text-secondary' : ''">
+        <Clock style="width: 24px; height: 24px;" />
+        <span class="small fw-medium mt-1" style="font-size: 10px;">Historial</span>
       </router-link>
 
-      <router-link to="/inventory" class="nav-item-mobile" active-class="text-primary">
-        <Package class="w-6 h-6" />
-        <span class="text-[10px] font-medium mt-1">Inventario</span>
+      <router-link to="/inventory" class="d-flex flex-column align-items-center justify-content-center w-100 p-2 text-decoration-none" active-class="text-primary" :class="$route.path !== '/inventory' ? 'text-secondary' : ''">
+        <Package style="width: 24px; height: 24px;" />
+        <span class="small fw-medium mt-1" style="font-size: 10px;">Inventario</span>
       </router-link>
 
-      <router-link to="/check" class="nav-item-mobile" active-class="text-primary">
-        <ScanLine class="w-6 h-6" />
-        <span class="text-[10px] font-medium mt-1">Check</span>
+      <router-link to="/check" class="d-flex flex-column align-items-center justify-content-center w-100 p-2 text-decoration-none" active-class="text-primary" :class="$route.path !== '/check' ? 'text-secondary' : ''">
+        <ScanLine style="width: 24px; height: 24px;" />
+        <span class="small fw-medium mt-1" style="font-size: 10px;">Check</span>
       </router-link>
     </nav>
   </div>
@@ -55,19 +54,3 @@
 <script setup>
 import { ShoppingBag, Clock, Package, ScanLine } from 'lucide-vue-next'
 </script>
-
-<style scoped>
-.nav-item-desktop {
-  @apply px-4 py-2 rounded-lg font-medium transition-colors hover:bg-gray-100 text-gray-600;
-}
-.nav-item-desktop.active {
-  @apply bg-blue-50 text-blue-700 border border-blue-200;
-}
-
-.nav-item-mobile {
-  @apply flex flex-col items-center justify-center w-full p-2 text-gray-400 active:scale-95 transition-all;
-}
-.pb-safe {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
-}
-</style>

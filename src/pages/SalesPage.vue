@@ -1,196 +1,203 @@
 <template>
-  <div class="h-full flex flex-col md:flex-row bg-gray-50 overflow-hidden relative">
+  <div class="h-100 d-flex flex-column flex-md-row bg-light overflow-hidden position-relative">
     
-    <!-- MOBILE ONLY: Tabs to switch views -->
-    <div class="md:hidden flex h-12 bg-white border-b border-gray-200 shrink-0">
+    <!-- MOBILE ONLY: Tabs -->
+    <div class="d-md-none d-flex flex-shrink-0 bg-white border-bottom" style="height: 48px;">
       <button 
         @click="activeMobileTab = 'sell'"
-        class="flex-1 font-medium text-sm flex items-center justify-center gap-2 border-b-2 transition-colors"
-        :class="activeMobileTab === 'sell' ? 'border-primary text-primary' : 'border-transparent text-gray-500'"
+        class="flex-fill border-0 bg-transparent fw-bold small d-flex align-items-center justify-content-center gap-2"
+        :class="activeMobileTab === 'sell' ? 'text-primary border-bottom border-primary border-3 border-opacity-100' : 'text-secondary'"
       >
-        <ScanLine class="w-4 h-4" />
+        <ScanLine style="width: 16px; height: 16px;" />
         Escanear
       </button>
       <button 
         @click="activeMobileTab = 'cart'"
-        class="flex-1 font-medium text-sm flex items-center justify-center gap-2 border-b-2 transition-colors"
-        :class="activeMobileTab === 'cart' ? 'border-primary text-primary' : 'border-transparent text-gray-500'"
+        class="flex-fill border-0 bg-transparent fw-bold small d-flex align-items-center justify-content-center gap-2"
+        :class="activeMobileTab === 'cart' ? 'text-primary border-bottom border-primary border-3 border-opacity-100' : 'text-secondary'"
       >
-        <ShoppingCart class="w-4 h-4" />
+        <ShoppingCart style="width: 16px; height: 16px;" />
         Carrito ({{ cartStore.items.reduce((a,c) => a + c.quantity, 0) }})
       </button>
     </div>
 
     <!-- LEFT PANEL (Scanner & Products) -->
-    <!-- On mobile, shown only if activeMobileTab is 'sell' -->
+    <!-- Using d-none logic instead of absolute positioning transition for simpler bootstrap-only implementation if allowed, 
+         but sliding is nice. To go pure classes, I'll use position-absolute with Bootstrap width/h classes and inline transform style just for the logic, 
+         OR just conditional rendering `d-none` for "Strict Bootstrap". The user said bugs with phone buttons, so maybe d-none is safer/cleaner than absolute overlay.
+         Let's try d-none for mobile toggling. It guarantees no overflow issues.
+    -->
     <div 
-      class="w-full md:w-1/2 flex flex-col h-full md:h-full border-r border-gray-200 bg-white transition-transform duration-300 absolute md:relative z-0"
-      :class="[
-        activeMobileTab === 'sell' ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-      ]"
+      class="w-100 w-md-50 d-flex flex-column h-100 border-end border-light-subtle bg-white"
+      :class="{'d-none d-md-flex': activeMobileTab === 'cart'}"
     >
       
-      <!-- Top: Scanner (Toggleable on mobile to save space?) -->
-      <!-- Keeping fixed height for now but smaller on mobile -->
-      <div class="h-48 md:h-1/3 bg-black relative shrink-0">
+      <!-- Top: Scanner -->
+      <div class="bg-black position-relative flex-shrink-0 overflow-hidden" style="height: 25vh; max-height: 250px; min-height: 150px;">
         <BarcodeScanner @scan="handleScan" />
       </div>
 
       <!-- Middle: Search & Filter -->
-      <div class="flex-1 flex flex-col bg-white p-3 overflow-hidden">
-        <div class="flex gap-2 mb-3">
-          <div class="relative flex-1">
+      <div class="flex-grow-1 d-flex flex-column p-3 overflow-hidden">
+        <div class="d-flex gap-2 mb-3">
+          <div class="position-relative flex-grow-1">
              <input 
               v-model="searchQuery"
               placeholder="Buscar..."
-              class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+              class="form-control ps-5"
               @keyup.enter="handleManualAdd"
             />
-            <Search class="absolute left-2.5 top-2.5 text-gray-400 w-4 h-4" />
+            <Search class="position-absolute text-secondary" style="left: 12px; top: 10px; width: 16px; height: 16px;" />
           </div>
-          <button @click="handleManualAdd" class="btn-primary p-2 rounded-lg md:px-4 md:py-2">
-            <Plus class="w-5 h-5" />
+          <button @click="handleManualAdd" class="btn btn-primary d-flex align-items-center justify-content-center px-3">
+            <Plus style="width: 20px; height: 20px;" />
           </button>
         </div>
 
         <!-- Categories -->
-        <div class="flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide shrink-0">
+        <div class="d-flex gap-2 overflow-auto pb-2 mb-2 flex-shrink-0" style="scrollbar-width: none;">
           <button 
             v-for="cat in productStore.categories" 
             :key="cat"
             @click="selectedCategory = cat"
-            class="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors border"
-            :class="selectedCategory === cat ? 'bg-primary text-white border-primary' : 'bg-gray-100 text-gray-600 border-gray-200'"
+            class="btn btn-sm rounded-pill text-nowrap"
+            :class="selectedCategory === cat ? 'btn-primary' : 'btn-light border'"
           >
             {{ cat }}
           </button>
         </div>
 
         <!-- Product Grid -->
-        <div class="flex-1 overflow-y-auto grid grid-cols-2 lg:grid-cols-3 gap-2 content-start pb-20 md:pb-0">
-          <div 
-            v-for="product in filteredProducts" 
-            :key="product.id"
-            @click="addToCart(product)"
-            class="bg-white border border-gray-100 rounded-xl p-3 shadow-sm active:scale-95 transition-transform flex flex-col items-center text-center h-min"
-          >
-            <div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center mb-1 text-xl">
-              📦
+        <div class="flex-grow-1 overflow-auto pb-5 md:pb-0">
+          <div class="row g-2 m-0 align-content-start">
+            <div 
+              v-for="product in filteredProducts" 
+              :key="product.id"
+              class="col-6 col-lg-4 p-1"
+            >
+              <div 
+                @click="addToCart(product)"
+                class="card h-100 border-0 shadow-sm text-center p-2"
+                style="cursor: pointer;"
+              >
+                <div class="mx-auto bg-light rounded-circle d-flex align-items-center justify-content-center mb-1" style="width: 40px; height: 40px; font-size: 1.2rem;">
+                  📦
+                </div>
+                <h6 class="card-title small fw-bold text-dark text-truncate mb-1" style="max-width: 100%;">{{ product.name }}</h6>
+                <p class="card-text text-primary fw-bold small m-0">${{ product.price.toFixed(2) }}</p>
+              </div>
             </div>
-            <h3 class="text-xs font-semibold text-gray-800 line-clamp-2 leading-tight h-8 w-full">{{ product.name }}</h3>
-            <p class="text-primary font-bold text-sm mt-1">${{ product.price.toFixed(2) }}</p>
           </div>
           
-          <div v-if="filteredProducts.length === 0" class="col-span-full text-center py-8 text-gray-400">
+          <div v-if="filteredProducts.length === 0" class="text-center py-5 text-secondary">
             Producto no encontrado
           </div>
         </div>
       </div>
       
-      <!-- Mobile Sticky Total Bar (When in Sell Mode) -->
-      <div class="md:hidden absolute bottom-0 left-0 right-0 bg-white border-t p-3 flex items-center justify-between shadow-lg z-10" v-if="cartStore.items.length > 0">
+      <!-- Mobile Sticky Total Bar -->
+      <div class="d-md-none border-top p-3 d-flex align-items-center justify-content-between shadow-sm bg-white" v-if="cartStore.items.length > 0">
          <div>
-           <p class="text-xs text-gray-500">Total</p>
-           <p class="font-bold text-lg">${{ cartStore.total.toFixed(2) }}</p>
+           <small class="text-secondary">Total</small>
+           <p class="h5 fw-bold m-0">${{ cartStore.total.toFixed(2) }}</p>
          </div>
-         <button @click="activeMobileTab = 'cart'" class="btn-primary py-2 px-4 text-sm flex items-center gap-2">
-           Ver Carrito <ArrowRight class="w-4 h-4" />
+         <button @click="activeMobileTab = 'cart'" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
+           Ver Carrito <ArrowRight style="width: 16px; height: 16px;" />
          </button>
       </div>
     </div>
 
     <!-- RIGHT PANEL (Cart & Checkout) -->
-     <!-- On mobile, shown only if activeMobileTab is 'cart' -->
     <div 
-      class="w-full md:w-1/2 flex flex-col h-full bg-gray-50 absolute md:relative z-10 md:z-0 transition-transform duration-300 md:transform-none"
-      :class="[
-        activeMobileTab === 'cart' ? 'translate-x-0' : 'translate-x-full'
-      ]"
+      class="w-100 w-md-50 d-flex flex-column h-100 bg-light"
+      :class="{'d-none d-md-flex': activeMobileTab === 'sell'}"
     >
       
-      <!-- Mobile Cart Header (Back button) -->
-      <div class="md:hidden flex items-center p-3 bg-white border-b">
-        <button @click="activeMobileTab = 'sell'" class="mr-2 text-gray-600">
-          <ArrowLeft class="w-6 h-6" />
+      <!-- Mobile Cart Header -->
+      <div class="d-md-none d-flex align-items-center p-3 bg-white border-bottom">
+        <button @click="activeMobileTab = 'sell'" class="btn p-0 me-2 text-dark border-0">
+          <ArrowLeft style="width: 24px; height: 24px;" />
         </button>
-        <span class="font-bold">Carrito de Compras</span>
+        <span class="fw-bold">Carrito de Compras</span>
       </div>
 
       <!-- Cart List -->
-      <div class="flex-1 overflow-y-auto p-4 content-start">
-        <h2 class="hidden md:flex text-xl font-bold mb-4 items-center gap-2">
-          <ShoppingCart class="w-6 h-6 text-primary" />
+      <div class="flex-grow-1 overflow-auto p-3">
+        <h2 class="d-none d-md-flex h5 fw-bold mb-3 align-items-center gap-2">
+          <ShoppingCart class="text-primary" style="width: 24px; height: 24px;" />
           Carrito
         </h2>
 
-        <div v-if="cartStore.items.length === 0" class="flex flex-col items-center justify-center h-64 text-gray-400">
-          <ShoppingBag class="w-16 h-16 mb-4 opacity-20" />
+        <div v-if="cartStore.items.length === 0" class="d-flex flex-column align-items-center justify-content-center h-50 text-secondary">
+          <ShoppingBag style="width: 64px; height: 64px; opacity: 0.2;" class="mb-3" />
           <p>Carrito vacío</p>
-          <button @click="activeMobileTab = 'sell'" class="mt-4 text-primary font-medium md:hidden">
+          <button @click="activeMobileTab = 'sell'" class="btn btn-link text-primary d-md-none text-decoration-none">
             Ir a escanear
           </button>
         </div>
 
-        <div v-else class="space-y-3">
+        <div v-else class="d-flex flex-column gap-2">
           <div 
             v-for="item in cartStore.items" 
             :key="item.id"
-            class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex items-center gap-3"
+            class="card border-0 shadow-sm p-2 d-flex flex-row align-items-center gap-2"
           >
-            <div class="flex-1">
-              <h4 class="font-semibold text-gray-800 text-sm">{{ item.name }}</h4>
-              <p class="text-xs text-gray-500">${{ item.price.toFixed(2) }}</p>
+            <div class="flex-grow-1">
+              <h6 class="mb-0 small fw-bold text-dark">{{ item.name }}</h6>
+              <small class="text-secondary">${{ item.price.toFixed(2) }}</small>
             </div>
 
             <!-- Quantity Controls -->
-            <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
+            <div class="d-flex align-items-center gap-2 bg-light rounded p-1">
               <button 
                 @click="cartStore.updateQuantity(item.id, -1)"
-                class="w-7 h-7 flex items-center justify-center bg-white rounded shadow-sm text-red-500 font-bold active:bg-gray-100"
+                class="btn btn-light btn-sm p-0 d-flex align-items-center justify-content-center border shadow-sm text-danger"
+                style="width: 28px; height: 28px;"
               >
-                <Minus class="w-3 h-3" />
+                <Minus style="width: 14px; height: 14px;" />
               </button>
-              <span class="w-4 text-center text-sm font-semibold">{{ item.quantity }}</span>
+              <span class="small fw-bold text-center" style="width: 20px;">{{ item.quantity }}</span>
               <button 
                 @click="cartStore.updateQuantity(item.id, 1)"
-                class="w-7 h-7 flex items-center justify-center bg-white rounded shadow-sm text-green-600 font-bold active:bg-gray-100"
+                class="btn btn-light btn-sm p-0 d-flex align-items-center justify-content-center border shadow-sm text-success"
+                style="width: 28px; height: 28px;"
               >
-                <Plus class="w-3 h-3" />
+                <Plus style="width: 14px; height: 14px;" />
               </button>
             </div>
             
-            <div class="text-right w-16">
-               <p class="font-bold text-gray-900 text-sm">${{ (item.price * item.quantity).toFixed(2) }}</p>
+            <div class="text-end" style="width: 60px;">
+               <p class="m-0 fw-bold small text-dark">${{ (item.price * item.quantity).toFixed(2) }}</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Payment Section -->
-      <div class="bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
-        <div class="mb-4">
-          <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2 block">Método de Pago</label>
-          <div class="grid grid-cols-4 gap-2">
-            <button 
-              v-for="method in paymentMethods" 
-              :key="method.id"
-              @click="selectedPayment = method.id"
-              class="flex flex-col items-center justify-center p-2 rounded-lg border transition-all active:scale-95"
-              :class="selectedPayment === method.id ? 'border-primary bg-primary/5 text-primary' : 'border-gray-100 text-gray-500'"
-            >
-              <component :is="method.icon" class="w-5 h-5 mb-1" />
-              <span class="text-[10px] font-medium">{{ method.name }}</span>
-            </button>
+      <div class="bg-white border-top p-3 shadow-lg z-3">
+        <div class="mb-3">
+          <label class="small fw-bold text-secondary text-uppercase mb-2 d-block">Método de Pago</label>
+          <div class="row g-2">
+            <div class="col-3" v-for="method in paymentMethods" :key="method.id">
+               <button 
+                @click="selectedPayment = method.id"
+                class="btn w-100 p-2 d-flex flex-column align-items-center justify-content-center gap-1 border"
+                :class="selectedPayment === method.id ? 'btn-primary-subtle text-primary border-primary' : 'btn-light border-light text-secondary'"
+              >
+                <component :is="method.icon" style="width: 20px; height: 20px;" />
+                <span style="font-size: 10px;" class="fw-medium">{{ method.name }}</span>
+              </button>
+            </div>
           </div>
         </div>
 
         <button 
           @click="handleCheckout"
           :disabled="cartStore.items.length === 0"
-          class="w-full bg-green-600 hover:bg-green-700 active:bg-green-800 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-green-600/20 disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2 transition-all active:scale-95"
+          class="btn btn-success w-100 py-3 rounded-3 fw-bold shadow d-flex align-items-center justify-content-center gap-2"
         >
           <span>Cobrar ${{ cartStore.total.toFixed(2) }}</span>
-          <ArrowRight class="w-5 h-5" />
+          <ArrowRight style="width: 20px; height: 20px;" />
         </button>
       </div>
     </div>
@@ -220,7 +227,7 @@ const salesStore = useSalesStore()
 const searchQuery = ref('')
 const selectedCategory = ref('Todos')
 const selectedPayment = ref('cash')
-const activeMobileTab = ref('sell') // 'sell' or 'cart'
+const activeMobileTab = ref('sell') 
 
 const paymentMethods = [
   { id: 'cash', name: 'Efectivo', icon: Banknote },
@@ -271,21 +278,9 @@ function handleCheckout() {
     items: [...cartStore.items]
   })
 
-  // Sweet Alert style toast could be better, but standard toast is fine
   toastStore.addToast(`Venta: $${total.toFixed(2)}`, 'success', 3000)
   cartStore.clearCart()
   
-  // Go back to sell screen on mobile
   activeMobileTab.value = 'sell'
 }
 </script>
-
-<style scoped>
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
-}
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-</style>

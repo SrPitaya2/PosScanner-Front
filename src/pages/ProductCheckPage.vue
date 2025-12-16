@@ -1,36 +1,36 @@
 <template>
-  <div class="h-full flex flex-col items-center justify-center p-6 bg-gray-900 text-white relative overflow-hidden">
+  <div class="h-100 d-flex flex-column align-items-center justify-content-center position-relative overflow-hidden bg-dark text-white p-3">
     <!-- Scanner Background -->
-    <div class="absolute inset-0 z-0 opacity-50">
+    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-50 z-0">
        <BarcodeScanner @scan="handleScan" />
     </div>
 
     <!-- Overlay Content -->
-    <div class="z-10 w-full max-w-md text-center">
+    <div class="z-1 w-100 text-center" style="max-width: 400px;">
       
-      <div v-if="!scannedProduct" class="bg-black/80 backdrop-blur-md p-8 rounded-2xl border border-white/10 shadow-2xl">
-        <ScanLine class="w-16 h-16 mx-auto mb-4 text-primary animate-pulse" />
-        <h2 class="text-2xl font-bold mb-2">Verificador de Precios</h2>
-        <p class="text-gray-400">Escanea el código de barras del producto para consultar su precio.</p>
+      <div v-if="!scannedProduct" class="bg-black bg-opacity-75 p-4 p-md-5 rounded-4 border border-secondary shadow-lg">
+        <ScanLine class="d-block mx-auto mb-3 text-primary" style="width: 64px; height: 64px;" />
+        <h2 class="h4 fw-bold mb-2">Verificador de Precios</h2>
+        <p class="text-secondary small m-0">Escanea el código de barras del producto para consultar su precio.</p>
       </div>
 
-      <div v-else class="bg-white text-gray-900 p-8 rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-300">
-        <div class="mb-4">
-          <span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wide">
+      <div v-else class="bg-white text-dark p-4 p-md-5 rounded-4 shadow-lg">
+        <div class="mb-3">
+          <span class="badge bg-primary-subtle text-primary text-uppercase tracking-wide">
             {{ scannedProduct.category }}
           </span>
         </div>
         
-        <h1 class="text-3xl font-extrabold mb-2 leading-tight">{{ scannedProduct.name }}</h1>
-        <p class="text-gray-500 font-mono mb-6">{{ scannedProduct.code }}</p>
+        <h1 class="h3 fw-bold mb-2 lh-sm">{{ scannedProduct.name }}</h1>
+        <p class="text-secondary font-monospace mb-4">{{ scannedProduct.code }}</p>
         
-        <div class="text-6xl font-black text-primary mb-6">
+        <div class="display-3 fw-bold text-primary mb-4">
           ${{ scannedProduct.price.toFixed(2) }}
         </div>
 
         <button 
           @click="scannedProduct = null"
-          class="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-colors"
+          class="btn btn-dark w-100 py-3 rounded-3 fw-bold"
         >
           Escanear Otro
         </button>
@@ -50,13 +50,11 @@ const productStore = useProductStore()
 const scannedProduct = ref(null)
 
 function handleScan(code) {
-  // Prevent re-scanning while showing result
   if (scannedProduct.value) return 
 
   const product = productStore.findByCode(code)
   if (product) {
     scannedProduct.value = product
-    // Auto-clear after 5 seconds
     setTimeout(() => {
       // scannedProduct.value = null 
     }, 5000)
