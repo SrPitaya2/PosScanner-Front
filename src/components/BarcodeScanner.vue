@@ -35,11 +35,10 @@ onMounted(async () => {
   try {
     const devices = await Html5Qrcode.getCameras()
     if (devices && devices.length) {
-      const cameraId = devices[0].id
       html5QrCode = new Html5Qrcode("reader")
       
       await html5QrCode.start(
-        cameraId, 
+        { facingMode: "environment" }, 
         {
           fps: 10,
           qrbox: { width: 250, height: 250 },

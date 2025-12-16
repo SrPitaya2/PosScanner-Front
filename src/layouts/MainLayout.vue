@@ -28,7 +28,7 @@
     </main>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="md:hidden bg-white border-t border-gray-200 flex justify-around items-center h-16 shrink-0 z-20 pb-safe">
+    <nav class="md:hidden bg-white border-t border-gray-200 flex justify-around items-center shrink-0 z-20 pb-safe pt-2">
       <router-link to="/" class="nav-item-mobile" active-class="text-primary">
         <ShoppingBag class="w-6 h-6" />
         <span class="text-[10px] font-medium mt-1">Venta</span>
@@ -65,9 +65,9 @@ import { ShoppingBag, Clock, Package, ScanLine } from 'lucide-vue-next'
 }
 
 .nav-item-mobile {
-  @apply flex flex-col items-center justify-center w-full h-full text-gray-400 active:scale-95 transition-all;
+  @apply flex flex-col items-center justify-center w-full p-2 text-gray-400 active:scale-95 transition-all;
 }
 .pb-safe {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
 }
 </style>
