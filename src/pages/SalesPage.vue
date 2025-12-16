@@ -21,14 +21,20 @@
       </button>
     </div>
 
+    <!-- NEW: Top Sticky Total Bar -->
+    <div v-if="cartStore.items.length > 0" class="d-md-none bg-primary text-white p-2 px-3 d-flex align-items-center justify-content-between shadow-sm flex-shrink-0">
+         <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-white text-primary rounded-pill">{{ cartStore.items.length }}</span>
+            <span class="fw-bold">Total: ${{ cartStore.total.toFixed(2) }}</span>
+         </div>
+         <button @click="activeMobileTab = 'cart'" class="btn btn-sm btn-white bg-white text-primary fw-bold d-flex align-items-center gap-1 rounded-pill px-3">
+           Ver Carrito <ArrowRight style="width: 14px;" />
+         </button>
+    </div>
+
     <!-- LEFT PANEL (Scanner & Products) -->
-    <!-- Using d-none logic instead of absolute positioning transition for simpler bootstrap-only implementation if allowed, 
-         but sliding is nice. To go pure classes, I'll use position-absolute with Bootstrap width/h classes and inline transform style just for the logic, 
-         OR just conditional rendering `d-none` for "Strict Bootstrap". The user said bugs with phone buttons, so maybe d-none is safer/cleaner than absolute overlay.
-         Let's try d-none for mobile toggling. It guarantees no overflow issues.
-    -->
     <div 
-      class="w-100 w-md-50 d-flex flex-column h-100 border-end border-light-subtle bg-white"
+      class="w-100 w-md-50 d-flex flex-column flex-grow-1 overflow-hidden border-end border-light-subtle bg-white position-relative"
       :class="{'d-none d-md-flex': activeMobileTab === 'cart'}"
     >
       
@@ -38,7 +44,7 @@
       </div>
 
       <!-- Middle: Search & Filter -->
-      <div class="flex-grow-1 d-flex flex-column p-3 overflow-hidden">
+      <div class="flex-grow-1 d-flex flex-column p-3 overflow-hidden position-relative">
         <div class="d-flex gap-2 mb-3">
           <div class="position-relative flex-grow-1">
              <input 
@@ -68,7 +74,7 @@
         </div>
 
         <!-- Product Grid -->
-        <div class="flex-grow-1 overflow-auto pb-5 md:pb-0">
+        <div class="flex-grow-1 overflow-auto">
           <div class="row g-2 m-0 align-content-start">
             <div 
               v-for="product in filteredProducts" 
@@ -95,16 +101,7 @@
         </div>
       </div>
       
-      <!-- Mobile Sticky Total Bar -->
-      <div class="d-md-none border-top p-3 d-flex align-items-center justify-content-between shadow-sm bg-white" v-if="cartStore.items.length > 0">
-         <div>
-           <small class="text-secondary">Total</small>
-           <p class="h5 fw-bold m-0">${{ cartStore.total.toFixed(2) }}</p>
-         </div>
-         <button @click="activeMobileTab = 'cart'" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
-           Ver Carrito <ArrowRight style="width: 16px; height: 16px;" />
-         </button>
-      </div>
+      <!-- REMOVED BOTTOM BAR -->
     </div>
 
     <!-- RIGHT PANEL (Cart & Checkout) -->

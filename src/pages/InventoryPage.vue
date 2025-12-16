@@ -86,7 +86,7 @@
     </div>
 
     <!-- Mobile Card List -->
-    <div class="d-md-none d-flex flex-column gap-3 pb-5">
+    <div class="d-md-none d-flex flex-column flex-grow-1 overflow-auto gap-3 pb-5">
        <div 
         v-for="product in filteredProducts" 
         :key="product.id"

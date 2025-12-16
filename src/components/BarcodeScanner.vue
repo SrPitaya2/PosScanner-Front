@@ -55,11 +55,15 @@ async function startScanner() {
 async function stopScanner() {
   if (html5QrCode) {
     try {
-      await html5QrCode.stop()
+      // Check if scanner is running before stopping
+      if (html5QrCode.isScanning) {
+         await html5QrCode.stop()
+      }
       html5QrCode.clear()
-      html5QrCode = null
     } catch (e) {
-      console.error("Failed to stop scanner", e)
+      console.warn("Scanner stop issue:", e)
+    } finally {
+      html5QrCode = null
     }
   }
 }

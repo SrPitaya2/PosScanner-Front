@@ -6,15 +6,10 @@
     </div>
 
     <!-- Overlay Content -->
-    <div class="z-1 w-100 text-center" style="max-width: 400px;">
+    <div class="z-1 w-100 h-100 d-flex flex-column justify-content-end align-items-center pb-5" style="max-width: 400px; pointer-events: none;">
       
-      <div v-if="!scannedProduct" class="bg-black bg-opacity-75 p-4 p-md-5 rounded-4 border border-secondary shadow-lg">
-        <ScanLine class="d-block mx-auto mb-3 text-primary" style="width: 64px; height: 64px;" />
-        <h2 class="h4 fw-bold mb-2">Verificador de Precios</h2>
-        <p class="text-secondary small m-0">Escanea el código de barras del producto para consultar su precio.</p>
-      </div>
-
-      <div v-else class="bg-white text-dark p-4 p-md-5 rounded-4 shadow-lg">
+      <!-- Result Card (Only shows when scanned) -->
+      <div v-if="scannedProduct" class="bg-white text-dark p-4 p-md-5 rounded-4 shadow-lg animate-fade-up" style="pointer-events: auto;">
         <div class="mb-3">
           <span class="badge bg-primary-subtle text-primary text-uppercase tracking-wide">
             {{ scannedProduct.category }}
@@ -27,18 +22,20 @@
         <div class="display-3 fw-bold text-primary mb-4">
           ${{ scannedProduct.price.toFixed(2) }}
         </div>
-
-        <button 
-          @click="scannedProduct = null"
-          class="btn btn-dark w-100 py-3 rounded-3 fw-bold"
-        >
-          Escanear Otro
-        </button>
       </div>
 
     </div>
   </div>
 </template>
+
+<style scoped>
+.backdrop-blur { backdrop-filter: blur(10px); }
+.animate-fade-up { animation: fadeUp 0.3s ease-out; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
 
 <script setup>
 import { ref } from 'vue'
@@ -56,8 +53,8 @@ function handleScan(code) {
   if (product) {
     scannedProduct.value = product
     setTimeout(() => {
-      // scannedProduct.value = null 
-    }, 5000)
+       scannedProduct.value = null 
+    }, 3000)
   }
 }
 </script>

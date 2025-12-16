@@ -37,7 +37,7 @@
     </div>
 
     <!-- Mobile Card View -->
-    <div class="d-md-none d-flex flex-column gap-3">
+    <div class="d-md-none d-flex flex-column flex-grow-1 overflow-auto gap-3 pb-5">
       <div 
         v-for="sale in filteredSales" 
         :key="sale.id" 
