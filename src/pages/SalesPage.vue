@@ -59,6 +59,12 @@
             <Plus style="width: 20px; height: 20px;" />
           </button>
         </div>
+        
+        <div class="mb-2">
+            <button @click="simulatePhysicalScan" class="btn btn-sm btn-outline-warning w-100 mb-2">
+                Simular Pistola (Coca Cola)
+            </button>
+        </div>
 
         <!-- Categories -->
         <div class="d-flex gap-2 overflow-auto pb-2 mb-2 flex-shrink-0" style="scrollbar-width: none;">
@@ -173,8 +179,9 @@
       <!-- Payment Section -->
       <div class="bg-white border-top p-3 shadow-lg z-3">
         <div class="mb-3">
+          <!-- Payment Methods -->
           <label class="small fw-bold text-secondary text-uppercase mb-2 d-block">Método de Pago</label>
-          <div class="row g-2">
+          <div class="row g-2 mb-3">
             <div class="col-3" v-for="method in paymentMethods" :key="method.id">
                <button 
                 @click="selectedPayment = method.id"
@@ -186,6 +193,36 @@
               </button>
             </div>
           </div>
+          
+          <!-- Rounding & Totals -->
+          <div class="border-top pt-2">
+             <div class="d-flex justify-content-between align-items-center mb-1">
+                 <span class="small text-secondary">Subtotal</span>
+                 <span class="fw-bold text-dark">${{ subtotal.toFixed(2) }}</span>
+             </div>
+             
+             <!-- Rounding Adjustment Display -->
+             <div v-if="Math.abs(roundingAdjustment) > 0.001" class="d-flex justify-content-between align-items-center mb-2">
+                 <span class="small text-secondary">Redondeo</span>
+                 <span class="small fw-bold" :class="roundingAdjustment > 0 ? 'text-danger' : 'text-success'">
+                    {{ roundingAdjustment > 0 ? '+' : '' }}{{ roundingAdjustment.toFixed(2) }}
+                 </span>
+             </div>
+
+             <!-- Editable Total -->
+             <div class="mb-2">
+                 <div class="input-group input-group-lg">
+                    <span class="input-group-text bg-primary text-white border-0 fw-bold">$</span>
+                    <input 
+                        type="number" 
+                        v-model="finalTotal" 
+                        class="form-control text-end fw-bold text-primary" 
+                        step="0.50"
+                    />
+                 </div>
+             </div>
+          </div>
+
         </div>
 
         <button 
@@ -193,7 +230,7 @@
           :disabled="cartStore.items.length === 0"
           class="btn btn-success w-100 py-3 rounded-3 fw-bold shadow d-flex align-items-center justify-content-center gap-2"
         >
-          <span>Cobrar ${{ cartStore.total.toFixed(2) }}</span>
+          <span>Cobrar</span>
           <ArrowRight style="width: 20px; height: 20px;" />
         </button>
       </div>
@@ -209,6 +246,7 @@ import { useProductStore } from '../stores/productStore'
 import { useCartStore } from '../stores/cartStore'
 import { useToastStore } from '../stores/toastStore'
 import { useSalesStore } from '../stores/salesStore'
+import { watch } from 'vue'
 import BarcodeScanner from '../components/BarcodeScanner.vue'
 import Toast from '../components/ui/Toast.vue'
 import { 
@@ -268,21 +306,103 @@ function handleManualAdd() {
    toastStore.addToast(`No se encontró "${searchQuery.value}"`, 'warning')
 }
 
-function handleCheckout() {
-  if (cartStore.items.length === 0) return
+function simulatePhysicalScan() {
+    const code = '7501055310886'; // Coca Cola code
+    
+    // Simulate fast typing
+    for (let char of code) {
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: char }));
+    }
+    // Simulate Enter
+    setTimeout(() => {
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    }, 50); // Small delay for Enter like real scanner
+}
 
-  const total = cartStore.total
+function handleCheckout() {
+
+  // Calculate final amounts
+  const subTotalAmount = cartStore.total
+  const totalToPay = finalTotal.value
+  const rounding = roundingAdjustment.value // This might be negative or positive
+
   const method = paymentMethods.find(m => m.id === selectedPayment.value).name
   
+  // 1. Deduct Inventory
+  cartStore.items.forEach(item => {
+      productStore.updateStock(item.id, -item.quantity)
+  })
+
+  // 2. Record Sale
   salesStore.addSale({
-    total: total,
+    subtotal: subTotalAmount,
+    rounding: rounding,
+    total: totalToPay,
     method: method,
     items: [...cartStore.items]
   })
 
-  toastStore.addToast(`Venta: $${total.toFixed(2)}`, 'success', 3000)
+  toastStore.addToast(`Venta: $${totalToPay.toFixed(2)}`, 'success', 3000)
   cartStore.clearCart()
   
+  // Reset local state
+  roundingAdjustment.value = 0
   activeMobileTab.value = 'sell'
 }
+
+// Rounding Logic
+const roundingAdjustment = ref(0)
+const subtotal = computed(() => cartStore.total)
+
+const finalTotal = computed({
+  get: () => {
+      // Avoid floating point errors for display
+      return Number((subtotal.value + roundingAdjustment.value).toFixed(2))
+  },
+  set: (val) => {
+    if (val === '') return
+    roundingAdjustment.value = val - subtotal.value
+  }
+})
+
+// Reset rounding if cart is emptied externally or changes
+watch(() => cartStore.items.length, (newLen) => {
+    if (newLen === 0) roundingAdjustment.value = 0
+})
+
+const scanBuffer = ref('')
+const lastKeyTime = ref(0) // Timestamp of last key press
+
+function handleGlobalKey(e) {
+  // Ignore if user is typing in an input field
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+
+  const now = Date.now()
+  
+  // If keys are too slow (> 100ms apart), assume manual typing and reset
+  if (now - lastKeyTime.value > 100) {
+    scanBuffer.value = ''
+  }
+  lastKeyTime.value = now
+
+  if (e.key === 'Enter') {
+    if (scanBuffer.value.length > 0) {
+      handleScan(scanBuffer.value)
+      scanBuffer.value = ''
+    }
+  } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+    // Only capture printable characters
+    scanBuffer.value += e.key
+  }
+}
+
+import { onMounted, onUnmounted } from 'vue'
+
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKey)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalKey)
+})
 </script>
