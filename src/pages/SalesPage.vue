@@ -40,7 +40,7 @@
       
       <!-- Top: Scanner -->
       <div class="bg-black position-relative flex-shrink-0 overflow-hidden" style="height: 25vh; max-height: 250px; min-height: 150px;">
-        <BarcodeScanner @scan="handleScan" />
+        <BarcodeScanner @scan="handleScan" :success="scanSuccess" />
       </div>
 
       <!-- Middle: Search & Filter -->
@@ -282,6 +282,8 @@ function addToCart(product) {
 }
 
 const lastScan = ref(0)
+const scanSuccess = ref(false)
+
 function handleScan(code) {
   const now = Date.now()
   if (now - lastScan.value < 1500) return // 1.5s cooldown
@@ -290,6 +292,11 @@ function handleScan(code) {
   const product = productStore.findByCode(code)
   if (product) {
     addToCart(product)
+    
+    // Green Flash
+    scanSuccess.value = true
+    setTimeout(() => { scanSuccess.value = false }, 500)
+    
   } else {
     toastStore.addToast(`No encontrado: ${code}`, 'error')
     searchQuery.value = code 

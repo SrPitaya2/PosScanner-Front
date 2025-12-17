@@ -3,14 +3,29 @@
     <!-- Scanner Container -->
     <div id="reader" class="w-100 h-100"></div>
     
-    <!-- Overlay Guide (Centered Box) -->
-    <div class="position-absolute top-50 start-50 translate-middle pe-none border border-danger border-2 rounded" style="width: 70%; height: 50%; opacity: 0.5;"></div>
+    <!-- VARIANT: Default (Red/Green Box for Sales) -->
+    <div 
+      class="position-absolute top-50 start-50 translate-middle pe-none border border-2 rounded transition-colors" 
+      :class="success ? 'border-success' : 'border-danger'"
+      style="width: 70%; height: 50%; opacity: 0.8; transition: border-color 0.2s ease;">
+    </div>
   </div>
 </template>
 
 <script setup>
 import { onMounted, onUnmounted } from 'vue'
 import { Html5Qrcode } from 'html5-qrcode'
+
+const props = defineProps({
+    variant: {
+        type: String,
+        default: 'default' // 'default' | 'modal'
+    },
+    success: {
+        type: Boolean,
+        default: false
+    }
+})
 
 const emit = defineEmits(['scan'])
 let html5QrCode = null
@@ -35,7 +50,6 @@ async function startScanner() {
         { facingMode: "environment" }, 
         {
           fps: 10,
-          qrbox: { width: 250, height: 250 },
           aspectRatio: 1.777778, // 16:9 aspect ratio
           disableFlip: false
         },
