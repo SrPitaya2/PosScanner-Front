@@ -72,10 +72,10 @@
                 </span>
               </td>
               <td class="text-end pe-4">
-                <div class="btn-group btn-group-sm">
-                  <button @click="openStockModal(product)" class="btn btn-light text-primary" title="Ajustar Stock">
-                     <Package style="width: 16px;" />
-                  </button>
+                 <div class="btn-group btn-group-sm">
+                   <button @click="openStockModal(product)" :disabled="!product.useInventory" class="btn btn-light" :class="!product.useInventory ? 'text-secondary opacity-25' : 'text-primary'" title="Ajustar Stock">
+                      <Package style="width: 16px;" />
+                   </button>
                   <button @click="openModal(product)" class="btn btn-light text-secondary" title="Editar">
                     <Edit2 style="width: 16px;" />
                   </button>
@@ -117,10 +117,10 @@
                   <span class="badge bg-light text-dark border">{{ product.category }}</span>
               </div>
               
-              <div class="btn-group btn-group-sm">
-                 <button @click="openStockModal(product)" class="btn btn-outline-primary border-0 bg-primary-subtle text-primary rounded-2 me-1 p-2">
-                   <Package style="width: 16px; height: 16px;" />
-                 </button>
+               <div class="btn-group btn-group-sm">
+                  <button @click="openStockModal(product)" :disabled="!product.useInventory" class="btn btn-outline-primary border-0 bg-primary-subtle text-primary rounded-2 me-1 p-2" :class="{'opacity-50': !product.useInventory}">
+                    <Package style="width: 16px; height: 16px;" />
+                  </button>
                  <button @click="openModal(product)" class="btn btn-outline-secondary border-0 bg-light text-secondary rounded-2 me-1 p-2">
                    <Edit2 style="width: 16px; height: 16px;" />
                  </button>
@@ -251,7 +251,7 @@
         <div class="list-group list-group-flush border rounded overflow-auto" style="max-height: 300px;">
           <div v-for="cat in productStore.categories" :key="cat" class="list-group-item d-flex justify-content-between align-items-center">
             <span>{{ cat }}</span>
-            <button @click="productStore.deleteCategory(cat)" class="btn btn-sm btn-link text-danger p-0 border-0">
+            <button @click="handleDeleteCategory(cat)" class="btn btn-sm btn-link text-danger p-0 border-0">
                <Trash2 style="width: 16px;" />
             </button>
           </div>
@@ -332,14 +332,24 @@ function openModal(product = null) {
 }
 
 function saveProduct() {
+  let result
   if (editingProduct.value) {
-    productStore.updateProduct(editingProduct.value.id, { ...form })
-    toastStore.addToast('Producto actualizado', 'success')
+    result = productStore.updateProduct(editingProduct.value.id, { ...form })
+    if (result.success) {
+         toastStore.addToast('Producto actualizado', 'success')
+         isProductModalOpen.value = false
+    } else {
+         toastStore.addToast(result.message, 'error')
+    }
   } else {
-    productStore.addProduct({ ...form })
-    toastStore.addToast('Producto creado', 'success')
+    result = productStore.addProduct({ ...form })
+    if (result.success) {
+         toastStore.addToast('Producto creado', 'success')
+         isProductModalOpen.value = false
+    } else {
+         toastStore.addToast(result.message, 'error')
+    }
   }
-  isProductModalOpen.value = false
 }
 
 function confirmDelete(product) {
@@ -383,5 +393,14 @@ function addNewCategory() {
     newCategoryName.value = ''
     toastStore.addToast('Categoría añadida', 'success')
   }
+}
+
+function handleDeleteCategory(cat) {
+    const success = productStore.deleteCategory(cat)
+    if (success) {
+        toastStore.addToast('Categoría eliminada', 'success')
+    } else {
+        toastStore.addToast('No se puede eliminar: Hay productos en esta categoría', 'error')
+    }
 }
 </script>

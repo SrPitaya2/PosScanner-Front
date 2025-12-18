@@ -47,10 +47,23 @@ export const useSalesStore = defineStore('sales', () => {
     function getSalesByDateRange(start, end) {
         if (!start && !end) return sales.value
 
-        const startDate = start ? new Date(start) : new Date(0)
-        const endDate = end ? new Date(end) : new Date()
-        // Adjust end date to end of day if it's just a date string
-        if (end && end.length === 10) endDate.setHours(23, 59, 59, 999)
+        let startDate, endDate
+
+        if (start) {
+            // "YYYY-MM-DD" -> Local Midnight
+            const [y, m, d] = start.split('-').map(Number)
+            startDate = new Date(y, m - 1, d, 0, 0, 0, 0)
+        } else {
+            startDate = new Date(0)
+        }
+
+        if (end) {
+            // "YYYY-MM-DD" -> Local End of Day
+            const [y, m, d] = end.split('-').map(Number)
+            endDate = new Date(y, m - 1, d, 23, 59, 59, 999)
+        } else {
+            endDate = new Date() // Now
+        }
 
         return sales.value.filter(s => {
             const d = new Date(s.date)

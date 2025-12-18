@@ -162,13 +162,35 @@ import { Eye, Download, ArrowRight } from 'lucide-vue-next'
 const salesStore = useSalesStore()
 const selectedSale = ref(null)
 
+// Helper for today's date in local YYYY-MM-DD
+const getTodayLocal = () => {
+    const d = new Date()
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
 const filters = reactive({
-  start: '',
-  end: ''
+  start: getTodayLocal(),
+  end: getTodayLocal()
 })
 
 const filteredSales = computed(() => {
-  return salesStore.getSalesByDateRange(filters.start, filters.end)
+  const getTodayLocal = () => {
+      const d = new Date()
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+  }
+
+  // Requirement: IF "sin fechas" (empty), treat as TODAY.
+  const today = getTodayLocal()
+  const start = filters.start || today
+  const end = filters.end || today
+  
+  return salesStore.getSalesByDateRange(start, end)
 })
 
 function formatDate(isoString) {

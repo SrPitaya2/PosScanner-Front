@@ -221,6 +221,7 @@
                         v-model="finalTotal" 
                         class="form-control text-end fw-bold text-primary" 
                         step="0.50"
+                        :disabled="cartStore.items.length === 0"
                     />
                  </div>
              </div>
@@ -297,7 +298,36 @@
         <button @click="confirmBulkAdd" class="btn btn-primary w-100 py-3 fw-bold rounded-3">
           Agregar al Carrito
         </button>
+        <button @click="confirmBulkAdd" class="btn btn-primary w-100 py-3 fw-bold rounded-3">
+          Agregar al Carrito
+        </button>
       </div>
+    </Modal>
+
+    <!-- Stock Warning Modal -->
+    <Modal
+      :isOpen="isStockWarningOpen"
+      title="⚠️ Stock Insuficiente"
+      @close="cancelStockWarning"
+    >
+        <div v-if="pendingProduct" class="text-center">
+            <div class="mb-3">
+                <span class="d-block h1">📦⚠️</span>
+                <p class="h6 fw-bold">{{ pendingProduct.name }}</p>
+                <p class="text-secondary small">
+                    Stock actual: <span class="fw-bold text-dark">{{ pendingProduct.stock }} {{ pendingProduct.unit }}</span>
+                </p>
+                <p class="text-danger fw-bold small">
+                    Estás intentando vender sin tener suficiente disponibilidad.
+                </p>
+            </div>
+            <p class="fw-bold mb-4">¿Deseas continuar de todos modos?</p>
+            
+            <div class="d-flex gap-2">
+                <button @click="cancelStockWarning" class="btn btn-light w-50">Cancelar</button>
+                <button @click="confirmStockData" class="btn btn-danger w-50 fw-bold">Continuar</button>
+            </div>
+        </div>
     </Modal>
   </div>
   
@@ -336,6 +366,11 @@ const bulkProduct = ref(null)
 const bulkAmount = ref(0)
 const bulkInput = ref(null)
 
+// Stock Warning
+const isStockWarningOpen = ref(false)
+const pendingProduct = ref(null)
+const pendingQty = ref(0)
+
 const paymentMethods = [
   { id: 'cash', name: 'Efectivo', icon: Banknote },
   { id: 'card', name: 'Tarjeta', icon: CreditCard },
@@ -347,29 +382,64 @@ const filteredProducts = computed(() => {
   return productStore.searchProducts(searchQuery.value, selectedCategory.value)
 })
 
-function addToCart(product) {
-  if (product.unit !== 'pza') {
-    bulkProduct.value = product
-    bulkAmount.value = 0
-    isBulkModalOpen.value = true
-    nextTick(() => {
-      if (bulkInput.value) bulkInput.value.focus()
-    })
-    return
-  }
+function addToCart(product, quantityOverride = null) {
+    if (product.unit !== 'pza' && quantityOverride === null) {
+        bulkProduct.value = product
+        bulkAmount.value = 0
+        isBulkModalOpen.value = true
+        nextTick(() => {
+          if (bulkInput.value) bulkInput.value.focus()
+        })
+        return
+    }
 
-  cartStore.addToCart(product)
+    const quantityToAdd = quantityOverride || 1
+
+    // Stock Validation
+    if (product.useInventory) {
+        const cartItem = cartStore.items.find(i => i.id === product.id)
+        const currentInCart = cartItem ? cartItem.quantity : 0
+        
+        // Check if adding this amount exceeds stock OR if stock is already 0/negative
+        if (product.stock - (currentInCart + quantityToAdd) < 0) {
+            // Trigger Warning
+            pendingProduct.value = product
+            pendingQty.value = quantityToAdd
+            isStockWarningOpen.value = true
+            return
+        }
+    }
+
+    proceedToCart(product, quantityToAdd)
+}
+
+function proceedToCart(product, quantity) {
+  cartStore.addToCart(product, quantity)
   if (navigator.vibrate) navigator.vibrate(50)
   toastStore.addToast(`+ ${product.name}`, 'success', 1000)
 }
 
+function confirmStockData() {
+    if (pendingProduct.value) {
+        proceedToCart(pendingProduct.value, pendingQty.value)
+    }
+    isStockWarningOpen.value = false
+    pendingProduct.value = null
+    pendingQty.value = 0
+}
+
+function cancelStockWarning() {
+    isStockWarningOpen.value = false
+    pendingProduct.value = null
+    pendingQty.value = 0
+}
+
 function confirmBulkAdd() {
-  if (bulkAmount.value > 0) {
-    cartStore.addToCart(bulkProduct.value, bulkAmount.value)
-    if (navigator.vibrate) navigator.vibrate(50)
-    toastStore.addToast(`+ ${bulkAmount.value} ${bulkProduct.value.unit} de ${bulkProduct.value.name}`, 'success', 1500)
-    isBulkModalOpen.value = false
-  } else {
+    if (bulkAmount.value > 0) {
+        // Use logic with stock validation
+        addToCart(bulkProduct.value, bulkAmount.value)
+        isBulkModalOpen.value = false
+    } else {
     toastStore.addToast('Ingresa una cantidad válida', 'warning')
   }
 }

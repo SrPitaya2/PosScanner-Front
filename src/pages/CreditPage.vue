@@ -82,18 +82,30 @@
              </div>
 
              <h6 class="fw-bold m-0 border-bottom pb-2">Movimientos</h6>
-             <div class="overflow-auto" style="max-height: 300px;">
-                 <div v-for="sale in currentClientDetails.sales" :key="'s'+sale.id" class="d-flex justify-content-between align-items-center border-bottom py-2">
-                     <div>
-                         <span class="badge bg-danger-subtle text-danger me-2">Fiado</span>
-                         <small class="text-secondary">{{ new Date(sale.date).toLocaleDateString() }} {{ new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</small>
+             <div class="overflow-auto" style="max-height: 400px;">
+                 <div v-for="sale in currentClientDetails.sales" :key="'s'+sale.id" class="border-bottom py-3">
+                     <div class="d-flex justify-content-between align-items-center mb-2">
+                         <div>
+                             <span class="badge bg-danger-subtle text-danger me-2">Fiado</span>
+                             <small class="text-secondary fw-bold">{{ new Date(sale.date).toLocaleDateString() }} {{ new Date(sale.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</small>
+                         </div>
+                         <span class="fw-bold text-danger">-${{ sale.total.toFixed(2) }}</span>
                      </div>
-                     <span class="fw-bold text-danger">-${{ sale.total.toFixed(2) }}</span>
+                     
+                     <!-- Product List -->
+                     <ul class="list-unstyled ps-2 m-0 bg-light rounded p-2" style="font-size: 0.85rem;">
+                         <li v-for="item in sale.items" :key="item.id" class="d-flex justify-content-between text-secondary">
+                             <span>{{ item.quantity }} {{ item.unit }} - {{ item.name }}</span>
+                             <span>${{ (item.price * item.quantity).toFixed(2) }}</span>
+                         </li>
+                     </ul>
                  </div>
-                 <div v-for="pay in currentClientDetails.payments" :key="'p'+pay.id" class="d-flex justify-content-between align-items-center border-bottom py-2">
+                 
+                 <div v-for="pay in currentClientDetails.payments" :key="'p'+pay.id" class="d-flex justify-content-between align-items-center border-bottom py-3">
                      <div>
                          <span class="badge bg-success-subtle text-success me-2">Abono</span>
                          <small class="text-secondary">{{ new Date(pay.date).toLocaleDateString() }} {{ new Date(pay.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</small>
+                         <div v-if="pay.note" class="small text-secondary fst-italic mt-1">"{{ pay.note }}"</div>
                      </div>
                      <span class="fw-bold text-success">+${{ pay.amount.toFixed(2) }}</span>
                  </div>
@@ -175,7 +187,11 @@ const groupedDebts = computed(() => {
   // 3. Cleanup & Calculate Balance
   Object.keys(groups).forEach(key => {
       groups[key].balance = groups[key].totalDebt - groups[key].totalPaid
-      // Optional: Remove if balance is 0? For now keep to show history.
+      
+      // Filter out settled debts (tolerance for float errors)
+      if (groups[key].balance <= 0.01) {
+          delete groups[key]
+      }
   })
 
   return groups
@@ -204,6 +220,14 @@ function openPayment(client) {
 function confirmPayment() {
     if (paymentAmount.value <= 0) {
         toastStore.addToast('Monto inválido', 'warning')
+        return
+    }
+
+    // Check against current balance
+    const currentBalance = currentClientDetails.value?.balance || 0
+    // Use a small epsilon for float comparison safety
+    if (paymentAmount.value > currentBalance + 0.01) {
+        toastStore.addToast(`El abono no puede exceder la deuda ($${currentBalance.toFixed(2)})`, 'error')
         return
     }
     

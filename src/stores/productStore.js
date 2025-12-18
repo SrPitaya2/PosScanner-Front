@@ -45,27 +45,42 @@ export const useProductStore = defineStore('products', () => {
     function updateStock(id, quantity) {
         const product = products.value.find(p => p.id === id)
         if (product && product.useInventory) {
-            product.stock = Math.max(0, Number((product.stock + quantity).toFixed(3)))
+            product.stock = Number((product.stock + quantity).toFixed(3))
             saveToLocale()
         }
     }
 
     function addProduct(product) {
-        products.value.push({
+        // Validation: Unique Code
+        if (product.code && products.value.some(p => p.code === product.code)) {
+            return { success: false, message: 'El código de barras ya existe' }
+        }
+
+        const newProduct = {
             ...product,
             id: Date.now(),
+            stock: product.stock || 0,
             unit: product.unit || 'pza',
             useInventory: product.useInventory !== undefined ? product.useInventory : true
-        })
+        }
+        products.value.push(newProduct)
         saveToLocale()
+        return { success: true }
     }
 
     function updateProduct(id, updates) {
         const index = products.value.findIndex(p => p.id === id)
-        if (index !== -1) {
+        if (index > -1) {
+            // Validation: Unique Code (exclude self)
+            if (updates.code && products.value.some(p => p.code === updates.code && p.id !== id)) {
+                return { success: false, message: 'El código de barras ya existe en otro producto' }
+            }
+
             products.value[index] = { ...products.value[index], ...updates }
             saveToLocale()
+            return { success: true }
         }
+        return { success: false, message: 'Producto no encontrado' }
     }
 
     function deleteProduct(id) {
@@ -81,9 +96,18 @@ export const useProductStore = defineStore('products', () => {
         }
     }
 
-    function deleteCategory(name) {
-        categories.value = categories.value.filter(c => c !== name)
-        saveToLocale()
+    function deleteCategory(category) {
+        // Prevent delete if used
+        if (products.value.some(p => p.category === category)) {
+            return false
+        }
+        const index = categories.value.indexOf(category)
+        if (index > -1) {
+            categories.value.splice(index, 1)
+            saveToLocale()
+            return true
+        }
+        return false
     }
 
     return {
