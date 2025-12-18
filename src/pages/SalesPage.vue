@@ -233,13 +233,13 @@
         <div class="mb-3">
             <label class="small fw-bold text-secondary text-uppercase mb-2 d-block">Cliente {{ selectedPayment === 'credit' ? '*' : '(Opcional)' }}</label>
             <div class="input-group input-group-lg">
-                <span class="input-group-text bg-light border-end-0">
-                    <User style="width: 20px;" :class="selectedPayment === 'credit' ? 'text-primary' : 'text-secondary'" />
+                <span class="input-group-text bg-light" :class="showClientError ? 'border-danger' : 'border-end-0'">
+                    <User style="width: 20px;" :class="showClientError ? 'text-danger' : (selectedPayment === 'credit' ? 'text-primary' : 'text-secondary')" />
                 </span>
                 <input 
                     v-model="clientName"
-                    class="form-control bg-light border-start-0"
-                    :class="{'border-primary shadow-sm': selectedPayment === 'credit', 'is-invalid': showClientError}"
+                    class="form-control bg-light"
+                    :class="{'border-primary shadow-sm border-start-0': selectedPayment === 'credit' && !showClientError, 'border-danger': showClientError, 'border-start-0': !showClientError}"
                     placeholder="Nombre del cliente..."
                     @input="showClientError = false"
                 />
