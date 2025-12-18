@@ -12,6 +12,7 @@
         <router-link to="/" class="btn btn-sm fw-medium border-0" active-class="btn-primary-subtle text-primary" :class="$route.path !== '/' ? 'text-secondary bg-transparent' : ''">Vender</router-link>
         <router-link to="/history" class="btn btn-sm fw-medium border-0" active-class="btn-primary-subtle text-primary" :class="$route.path !== '/history' ? 'text-secondary bg-transparent' : ''">Historial</router-link>
         <router-link to="/inventory" class="btn btn-sm fw-medium border-0" active-class="btn-primary-subtle text-primary" :class="$route.path !== '/inventory' ? 'text-secondary bg-transparent' : ''">Inventario</router-link>
+        <router-link to="/credit" class="btn btn-sm fw-medium border-0" active-class="btn-primary-subtle text-primary" :class="$route.path !== '/credit' ? 'text-secondary bg-transparent' : ''">Fiados</router-link>
         <router-link to="/check" class="btn btn-sm fw-medium border-0" active-class="btn-primary-subtle text-primary" :class="$route.path !== '/check' ? 'text-secondary bg-transparent' : ''">Verificar</router-link>
       </nav>
     </header>
@@ -46,6 +47,9 @@
          </router-link>
          <router-link to="/inventory" @click="isMenuOpen = false" class="btn btn-light text-start d-flex align-items-center gap-2" active-class="btn-primary-subtle text-primary font-weight-bold">
            <Package style="width: 18px;" /> Inventario
+         </router-link>
+         <router-link to="/credit" @click="isMenuOpen = false" class="btn btn-light text-start d-flex align-items-center gap-2" active-class="btn-primary-subtle text-primary font-weight-bold">
+           <UserCheck style="width: 18px;" /> Fiados
          </router-link>
          <router-link to="/check" @click="isMenuOpen = false" class="btn btn-light text-start d-flex align-items-center gap-2" active-class="btn-primary-subtle text-primary font-weight-bold">
            <ScanLine style="width: 18px;" /> Verificador
@@ -90,7 +94,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { ShoppingBag, Clock, Package, ScanLine, Menu, X } from 'lucide-vue-next'
+import { ShoppingBag, Clock, Package, ScanLine, Menu, X, UserCheck } from 'lucide-vue-next'
 
 const isMenuOpen = ref(false)
 </script>

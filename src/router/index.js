@@ -4,6 +4,7 @@ import SalesPage from '../pages/SalesPage.vue'
 import InventoryPage from '../pages/InventoryPage.vue'
 import HistoryPage from '../pages/HistoryPage.vue'
 import ProductCheckPage from '../pages/ProductCheckPage.vue'
+import CreditPage from '../pages/CreditPage.vue'
 
 const routes = [
     {
@@ -14,6 +15,7 @@ const routes = [
             { path: 'inventory', component: InventoryPage, name: 'Inventory' },
             { path: 'history', component: HistoryPage, name: 'History' },
             { path: 'check', component: ProductCheckPage, name: 'Check' },
+            { path: 'credit', component: CreditPage, name: 'Credit' },
         ]
     }
 ]

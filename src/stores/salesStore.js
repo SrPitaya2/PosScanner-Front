@@ -3,11 +3,19 @@ import { ref, computed } from 'vue'
 
 export const useSalesStore = defineStore('sales', () => {
     const sales = ref([])
+    const payments = ref([]) // NEW: Track payments/abonos
 
     // Load from local storage on init
     const stored = localStorage.getItem('pos_sales_history')
     if (stored) {
-        sales.value = JSON.parse(stored)
+        const data = JSON.parse(stored)
+        // Backwards compatibility check
+        if (Array.isArray(data)) {
+            sales.value = data
+        } else {
+            sales.value = data.sales || []
+            payments.value = data.payments || []
+        }
     }
 
     function addSale(sale) {
@@ -20,8 +28,20 @@ export const useSalesStore = defineStore('sales', () => {
         save()
     }
 
+    function addPayment(payment) {
+        payments.value.unshift({
+            ...payment,
+            id: Date.now(),
+            date: new Date().toISOString()
+        })
+        save()
+    }
+
     function save() {
-        localStorage.setItem('pos_sales_history', JSON.stringify(sales.value))
+        localStorage.setItem('pos_sales_history', JSON.stringify({
+            sales: sales.value,
+            payments: payments.value
+        }))
     }
 
     function getSalesByDateRange(start, end) {
@@ -47,7 +67,9 @@ export const useSalesStore = defineStore('sales', () => {
 
     return {
         sales,
+        payments,
         addSale,
+        addPayment,
         getSalesByDateRange,
         todayTotal
     }

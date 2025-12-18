@@ -17,7 +17,7 @@
         :class="activeMobileTab === 'cart' ? 'text-primary border-bottom border-primary border-3 border-opacity-100' : 'text-secondary'"
       >
         <ShoppingCart style="width: 16px; height: 16px;" />
-        Carrito ({{ cartStore.items.reduce((a,c) => a + c.quantity, 0) }})
+        Carrito ({{ cartStore.items.reduce((a,c) => a + (c.unit === 'pza' ? c.quantity : 1), 0) }})
       </button>
     </div>
 
@@ -69,7 +69,7 @@
         <!-- Categories -->
         <div class="d-flex gap-2 overflow-auto pb-2 mb-2 flex-shrink-0" style="scrollbar-width: none;">
           <button 
-            v-for="cat in productStore.categories" 
+            v-for="cat in productStore.allCategories" 
             :key="cat"
             @click="selectedCategory = cat"
             class="btn btn-sm rounded-pill text-nowrap"
@@ -153,15 +153,18 @@
             <!-- Quantity Controls -->
             <div class="d-flex align-items-center gap-2 bg-light rounded p-1">
               <button 
-                @click="cartStore.updateQuantity(item.id, -1)"
+                @click="cartStore.updateQuantity(item.id, item.unit === 'pza' ? -1 : -0.1)"
                 class="btn btn-light btn-sm p-0 d-flex align-items-center justify-content-center border shadow-sm text-danger"
                 style="width: 28px; height: 28px;"
               >
                 <Minus style="width: 14px; height: 14px;" />
               </button>
-              <span class="small fw-bold text-center" style="width: 20px;">{{ item.quantity }}</span>
+              <div class="d-flex flex-column align-items-center" style="min-width: 40px;">
+                <span class="small fw-bold text-center lh-1">{{ item.quantity }}</span>
+                <span class="text-secondary" style="font-size: 8px;">{{ item.unit }}</span>
+              </div>
               <button 
-                @click="cartStore.updateQuantity(item.id, 1)"
+                @click="cartStore.updateQuantity(item.id, item.unit === 'pza' ? 1 : 0.1)"
                 class="btn btn-light btn-sm p-0 d-flex align-items-center justify-content-center border shadow-sm text-success"
                 style="width: 28px; height: 28px;"
               >
@@ -225,6 +228,26 @@
 
         </div>
 
+        <!-- Client Name Input (Visible for everyone but required for Credit) -->
+        <div class="mb-3">
+            <label class="small fw-bold text-secondary text-uppercase mb-2 d-block">Cliente {{ selectedPayment === 'credit' ? '*' : '(Opcional)' }}</label>
+            <div class="input-group input-group-lg">
+                <span class="input-group-text bg-light border-end-0">
+                    <User style="width: 20px;" :class="selectedPayment === 'credit' ? 'text-primary' : 'text-secondary'" />
+                </span>
+                <input 
+                    v-model="clientName"
+                    class="form-control bg-light border-start-0"
+                    :class="{'border-primary shadow-sm': selectedPayment === 'credit', 'is-invalid': showClientError}"
+                    placeholder="Nombre del cliente..."
+                    @input="showClientError = false"
+                />
+            </div>
+            <div v-if="showClientError" class="invalid-feedback d-block small mt-1">
+                Nombre requerido para ventas a crédito
+            </div>
+        </div>
+
         <button 
           @click="handleCheckout"
           :disabled="cartStore.items.length === 0"
@@ -235,23 +258,64 @@
         </button>
       </div>
     </div>
+
+    <!-- Bulk Input Modal -->
+    <Modal
+      :isOpen="isBulkModalOpen"
+      :title="'Ingresar ' + (bulkProduct?.unit === 'kg' ? 'Kilos' : 'Litros')"
+      @close="isBulkModalOpen = false"
+    >
+      <div v-if="bulkProduct" class="text-center">
+        <h3 class="h5 fw-bold mb-1">{{ bulkProduct.name }}</h3>
+        <p class="text-secondary small mb-4">Precio x {{ bulkProduct.unit }}: ${{ bulkProduct.price.toFixed(2) }}</p>
+
+        <div class="mb-4">
+           <div class="input-group input-group-lg shadow-sm">
+              <input 
+                ref="bulkInput"
+                v-model.number="bulkAmount" 
+                type="number" 
+                step="0.001" 
+                class="form-control text-center fw-bold border-primary" 
+                placeholder="0.000"
+                @keyup.enter="confirmBulkAdd"
+              />
+              <span class="input-group-text bg-primary text-white border-primary fw-bold">{{ bulkProduct.unit }}</span>
+           </div>
+           <div class="mt-2 h4 fw-bold text-primary">
+              Total: ${{ (bulkProduct.price * (bulkAmount || 0)).toFixed(2) }}
+           </div>
+        </div>
+
+        <!-- Quick selection buttons for common weights -->
+        <div class="d-flex gap-2 flex-wrap justify-content-center mb-4">
+           <button v-for="w in [0.25, 0.5, 1, 2]" :key="w" @click="bulkAmount = w" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+             {{ w }} {{ bulkProduct.unit }}
+           </button>
+        </div>
+
+        <button @click="confirmBulkAdd" class="btn btn-primary w-100 py-3 fw-bold rounded-3">
+          Agregar al Carrito
+        </button>
+      </div>
+    </Modal>
   </div>
   
   <Toast />
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useProductStore } from '../stores/productStore'
 import { useCartStore } from '../stores/cartStore'
 import { useToastStore } from '../stores/toastStore'
 import { useSalesStore } from '../stores/salesStore'
-import { watch } from 'vue'
+import Modal from '../components/ui/Modal.vue'
 import BarcodeScanner from '../components/BarcodeScanner.vue'
 import Toast from '../components/ui/Toast.vue'
 import { 
   Search, Plus, Minus, Trash2, ShoppingCart, ShoppingBag, 
-  ArrowRight, ArrowLeft, CreditCard, Banknote, FileText, UserCheck, ScanLine 
+  ArrowRight, ArrowLeft, CreditCard, Banknote, FileText, UserCheck, ScanLine, User
 } from 'lucide-vue-next'
 
 const productStore = useProductStore()
@@ -263,6 +327,14 @@ const searchQuery = ref('')
 const selectedCategory = ref('Todos')
 const selectedPayment = ref('cash')
 const activeMobileTab = ref('sell') 
+const clientName = ref('')
+const showClientError = ref(false)
+
+// Bulk handling
+const isBulkModalOpen = ref(false)
+const bulkProduct = ref(null)
+const bulkAmount = ref(0)
+const bulkInput = ref(null)
 
 const paymentMethods = [
   { id: 'cash', name: 'Efectivo', icon: Banknote },
@@ -276,9 +348,30 @@ const filteredProducts = computed(() => {
 })
 
 function addToCart(product) {
+  if (product.unit !== 'pza') {
+    bulkProduct.value = product
+    bulkAmount.value = 0
+    isBulkModalOpen.value = true
+    nextTick(() => {
+      if (bulkInput.value) bulkInput.value.focus()
+    })
+    return
+  }
+
   cartStore.addToCart(product)
   if (navigator.vibrate) navigator.vibrate(50)
   toastStore.addToast(`+ ${product.name}`, 'success', 1000)
+}
+
+function confirmBulkAdd() {
+  if (bulkAmount.value > 0) {
+    cartStore.addToCart(bulkProduct.value, bulkAmount.value)
+    if (navigator.vibrate) navigator.vibrate(50)
+    toastStore.addToast(`+ ${bulkAmount.value} ${bulkProduct.value.unit} de ${bulkProduct.value.name}`, 'success', 1500)
+    isBulkModalOpen.value = false
+  } else {
+    toastStore.addToast('Ingresa una cantidad válida', 'warning')
+  }
 }
 
 const lastScan = ref(0)
@@ -327,6 +420,12 @@ function simulatePhysicalScan() {
 }
 
 function handleCheckout() {
+  // Validate Client Name for Credit Sales
+  if (selectedPayment.value === 'credit' && !clientName.value.trim()) {
+      showClientError.value = true
+      toastStore.addToast('Ingresa el nombre del cliente', 'error')
+      return
+  }
 
   // Calculate final amounts
   const subTotalAmount = cartStore.total
@@ -335,9 +434,11 @@ function handleCheckout() {
 
   const method = paymentMethods.find(m => m.id === selectedPayment.value).name
   
-  // 1. Deduct Inventory
+  // 1. Deduct Inventory (Only if useInventory is true)
   cartStore.items.forEach(item => {
-      productStore.updateStock(item.id, -item.quantity)
+      if (item.useInventory) {
+          productStore.updateStock(item.id, -item.quantity)
+      }
   })
 
   // 2. Record Sale
@@ -346,6 +447,7 @@ function handleCheckout() {
     rounding: rounding,
     total: totalToPay,
     method: method,
+    client: clientName.value.trim() || 'Público General',
     items: [...cartStore.items]
   })
 
@@ -355,6 +457,8 @@ function handleCheckout() {
   // Reset local state
   roundingAdjustment.value = 0
   activeMobileTab.value = 'sell'
+  clientName.value = ''
+  showClientError.value = false
 }
 
 // Rounding Logic
@@ -402,8 +506,6 @@ function handleGlobalKey(e) {
     scanBuffer.value += e.key
   }
 }
-
-import { onMounted, onUnmounted } from 'vue'
 
 onMounted(() => {
   window.addEventListener('keydown', handleGlobalKey)
