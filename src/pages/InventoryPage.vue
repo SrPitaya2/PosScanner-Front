@@ -45,8 +45,8 @@
           <thead class="bg-light sticky-top">
             <tr class="text-uppercase small text-secondary">
               <th class="ps-4 py-3 border-bottom-0">Producto</th>
-              <th class="py-3 border-bottom-0">Código</th>
-              <th class="py-3 border-bottom-0">Categoría</th>
+              <th class="text-center py-3 border-bottom-0">Código</th>
+              <th class="text-center py-3 border-bottom-0">Categoría</th>
               <th class="text-end py-3 border-bottom-0">Precio</th>
               <th class="text-center py-3 border-bottom-0">Stock</th>
               <th class="text-end pe-4 py-3 border-bottom-0">Acciones</th>
@@ -57,18 +57,39 @@
               v-for="product in filteredProducts" 
               :key="product.id" 
             >
-              <td class="ps-4 fw-medium text-dark">{{ product.name }}</td>
-              <td class="text-secondary small font-monospace">{{ product.code }}</td>
-              <td>
-                <span class="badge bg-light text-dark border">{{ product.category }}</span>
+              <td class="ps-4 text-start">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="fw-bold text-dark">{{ product.name }}</span>
+                  <span v-if="!product.code" class="badge bg-warning-subtle text-warning border border-warning" style="font-size: 9px;">Sin Código</span>
+                </div>
               </td>
+              <td class="text-center text-secondary small font-monospace">{{ product.code || 'N/A' }}</td>
+              <td class="text-center"><span class="badge bg-light text-dark border">{{ product.category }}</span></td>
               <td class="text-end fw-bold text-dark">${{ product.price.toFixed(2) }}</td>
               <td class="text-center">
                 <span 
-                  class="badge rounded-pill"
-                  :class="product.useInventory ? (product.stock < 10 ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success') : 'bg-secondary-subtle text-secondary'"
+                  v-if="!product.useInventory"
+                  class="badge bg-secondary-subtle text-secondary"
                 >
-                  {{ product.useInventory ? product.stock + ' ' + product.unit : 'S/I' }}
+                  N/A
+                </span>
+                <span 
+                  v-else-if="product.stock <= 0"
+                  class="badge bg-danger text-white fw-bold"
+                >
+                  Agotado
+                </span>
+                <span 
+                  v-else-if="product.stock <= product.minStock && product.minStock > 0"
+                  class="badge bg-warning text-dark fw-bold"
+                >
+                  {{ product.stock }} {{ product.unit }}
+                </span>
+                <span 
+                  v-else
+                  class="badge bg-success-subtle text-success"
+                >
+                  {{ product.stock }} {{ product.unit }}
                 </span>
               </td>
               <td class="text-end pe-4">
@@ -190,8 +211,16 @@
             <label class="form-label small fw-bold">Stock Inicial</label>
             <input v-model.number="form.stock" type="number" step="0.001" :disabled="!form.useInventory" required class="form-control" />
           </div>
-          <div class="col-6 d-flex align-items-end pb-1">
-            <div class="form-check form-switch mb-1">
+          <div class="col-6">
+            <label class="form-label small fw-bold">Stock Mínimo <span class="text-secondary fw-normal">(Opcional)</span></label>
+            <input v-model.number="form.minStock" type="number" step="1" :disabled="!form.useInventory" class="form-control" placeholder="0" />
+            <small class="text-secondary">Alerta cuando llegue a este nivel</small>
+          </div>
+        </div>
+        
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" v-model="form.useInventory" id="useInventory">
               <label class="form-check-label small fw-bold" for="useInventory">Controlar Stock</label>
             </div>
@@ -303,6 +332,7 @@ const form = reactive({
   category: '',
   price: 0,
   stock: 0,
+  minStock: 0,
   unit: 'pza',
   useInventory: true
 })

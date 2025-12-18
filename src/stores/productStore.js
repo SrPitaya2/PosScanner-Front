@@ -8,12 +8,12 @@ export const useProductStore = defineStore('products', () => {
     const savedCategories = localStorage.getItem('categories')
 
     const products = ref(savedProducts ? JSON.parse(savedProducts) : [
-        { id: 1, name: 'Lysol Desinfectante', code: '7501032919177', price: 70.00, category: 'Limpieza', stock: 50, unit: 'pza', useInventory: true },
-        { id: 2, name: 'Coca Cola 600ml', code: '7501055310886', price: 18.00, category: 'Bebidas', stock: 100, unit: 'pza', useInventory: true },
-        { id: 3, name: 'Sabritas Sal 45g', code: '7501011115609', price: 16.00, category: 'Botanas', stock: 25, unit: 'pza', useInventory: true },
-        { id: 4, name: 'Emperador Chocolate', code: '7501000622283', price: 22.00, category: 'Galletas', stock: 40, unit: 'pza', useInventory: true },
-        { id: 5, name: 'Leche Lala 1L', code: '7501020513123', price: 28.50, category: 'Lacteos', stock: 15, unit: 'pza', useInventory: true },
-        { id: 6, name: 'Jabon Zote Rosa', code: '7501025400114', price: 12.00, category: 'Limpieza', stock: 200, unit: 'pza', useInventory: true }
+        { id: 1, name: 'Lysol Desinfectante', code: '7501032919177', price: 70.00, category: 'Limpieza', stock: 50, minStock: 10, unit: 'pza', useInventory: true },
+        { id: 2, name: 'Coca Cola 600ml', code: '7501055310886', price: 18.00, category: 'Bebidas', stock: 100, minStock: 20, unit: 'pza', useInventory: true },
+        { id: 3, name: 'Sabritas Sal 45g', code: '7501011115609', price: 16.00, category: 'Botanas', stock: 25, minStock: 5, unit: 'pza', useInventory: true },
+        { id: 4, name: 'Emperador Chocolate', code: '7501000622283', price: 22.00, category: 'Galletas', stock: 40, minStock: 10, unit: 'pza', useInventory: true },
+        { id: 5, name: 'Leche Lala 1L', code: '7501020513123', price: 28.50, category: 'Lacteos', stock: 15, minStock: 5, unit: 'pza', useInventory: true },
+        { id: 6, name: 'Jabon Zote Rosa', code: '7501025400114', price: 12.00, category: 'Limpieza', stock: 200, minStock: 50, unit: 'pza', useInventory: true }
     ])
 
     const categories = ref(savedCategories ? JSON.parse(savedCategories) : ['Limpieza', 'Bebidas', 'Botanas', 'Galletas', 'Lacteos', 'Frutas y Verduras'])
@@ -60,6 +60,7 @@ export const useProductStore = defineStore('products', () => {
             ...product,
             id: Date.now(),
             stock: product.stock || 0,
+            minStock: product.minStock || 0,
             unit: product.unit || 'pza',
             useInventory: product.useInventory !== undefined ? product.useInventory : true
         }
